@@ -3,7 +3,7 @@ import { buildReplay } from './analyze'
 import type { Phase, Replay, ReplayLine, RepoSnapshot, Severity } from './types'
 
 // Sejal palette
-const C = { wine: '#7C113A', powder: '#B9D6FC', terra: '#EA6244', blush: '#FBEAE7' }
+const C = { wine: '#68002C', powder: '#A6C9DD', terra: '#E098AC', blush: '#FFF8D5' }
 
 const PHASE_LABEL: Record<Phase, string> = { clone: 'Clone', open: 'Open', agent: 'Agent', install: 'Install', run: 'Run' }
 const PHASES: Phase[] = ['clone', 'open', 'agent', 'install', 'run']

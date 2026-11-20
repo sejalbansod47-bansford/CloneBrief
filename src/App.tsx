@@ -21,17 +21,17 @@ const flags = [
 function Arrow({ diagonal = false }: { diagonal?: boolean }) { return <span aria-hidden="true">{diagonal ? '↗' : '→'}</span> }
 function Laptop({ mood = 0, small = false }: { mood?: number; small?: boolean }) {
   return <svg className={small ? 'laptop laptop-small' : 'laptop'} viewBox="0 0 360 260" role="img" aria-label={`Laptop feeling ${moments[mood].face}`}>
-    <ellipse cx="184" cy="238" rx="140" ry="13" fill="#7C113A" opacity=".1" />
-    <path d="M70 48 Q70 30 88 30 H279 Q296 30 296 48 V198 H70Z" fill="#B9D6FC" stroke="#7C113A" strokeWidth="5"/>
-    <rect x="83" y="43" width="199" height="141" rx="9" fill="#FDF6F2" stroke="#7C113A" strokeWidth="3"/>
-    <path d="M69 198 36 220 Q31 229 45 230 H320 Q334 229 328 220 L296 198Z" fill="#B9D6FC" stroke="#7C113A" strokeWidth="5"/>
-    <path d="M149 202H215L224 217H140Z" fill="#FBEAE7" stroke="#7C113A" strokeWidth="2"/>
-    <path d="M107 67h35m-35 9h19" stroke="#7C113A" strokeWidth="4" strokeLinecap="round" opacity=".25"/>
-    <ellipse cx="147" cy="112" rx="7" ry={mood > 1 ? 12 : 9} fill="#7C113A"/><ellipse cx="219" cy="112" rx="7" ry={mood > 1 ? 12 : 9} fill="#7C113A"/>
-    <ellipse cx="127" cy="133" rx="13" ry="6" fill="#EA6244" opacity=".35"/><ellipse cx="239" cy="133" rx="13" ry="6" fill="#EA6244" opacity=".35"/>
-    {mood === 0 ? <path d="M169 137q14 17 28 0" fill="none" stroke="#7C113A" strokeWidth="4" strokeLinecap="round"/> : mood === 1 ? <path d="m172 143 22-5" stroke="#7C113A" strokeWidth="4" strokeLinecap="round"/> : <ellipse cx="183" cy="145" rx={mood === 3 ? 12 : 7} ry={mood === 3 ? 15 : 9} fill="#7C113A"/>}
-    {mood > 1 && <path d="M259 70q-15 19 0 22 15-3 0-22" fill="#B9D6FC" stroke="#7C113A" strokeWidth="2"/>}
-    <path d="M63 113q-25-4-32 12m268-11q27-7 35 6" stroke="#7C113A" strokeWidth="4" fill="none" strokeLinecap="round"/>
+    <ellipse cx="184" cy="238" rx="140" ry="13" fill="#68002C" opacity=".1" />
+    <path d="M70 48 Q70 30 88 30 H279 Q296 30 296 48 V198 H70Z" fill="#A6C9DD" stroke="#68002C" strokeWidth="5"/>
+    <rect x="83" y="43" width="199" height="141" rx="9" fill="#FDF6F2" stroke="#68002C" strokeWidth="3"/>
+    <path d="M69 198 36 220 Q31 229 45 230 H320 Q334 229 328 220 L296 198Z" fill="#A6C9DD" stroke="#68002C" strokeWidth="5"/>
+    <path d="M149 202H215L224 217H140Z" fill="#FFF8D5" stroke="#68002C" strokeWidth="2"/>
+    <path d="M107 67h35m-35 9h19" stroke="#68002C" strokeWidth="4" strokeLinecap="round" opacity=".25"/>
+    <ellipse cx="147" cy="112" rx="7" ry={mood > 1 ? 12 : 9} fill="#68002C"/><ellipse cx="219" cy="112" rx="7" ry={mood > 1 ? 12 : 9} fill="#68002C"/>
+    <ellipse cx="127" cy="133" rx="13" ry="6" fill="#E098AC" opacity=".35"/><ellipse cx="239" cy="133" rx="13" ry="6" fill="#E098AC" opacity=".35"/>
+    {mood === 0 ? <path d="M169 137q14 17 28 0" fill="none" stroke="#68002C" strokeWidth="4" strokeLinecap="round"/> : mood === 1 ? <path d="m172 143 22-5" stroke="#68002C" strokeWidth="4" strokeLinecap="round"/> : <ellipse cx="183" cy="145" rx={mood === 3 ? 12 : 7} ry={mood === 3 ? 15 : 9} fill="#68002C"/>}
+    {mood > 1 && <path d="M259 70q-15 19 0 22 15-3 0-22" fill="#A6C9DD" stroke="#68002C" strokeWidth="2"/>}
+    <path d="M63 113q-25-4-32 12m268-11q27-7 35 6" stroke="#68002C" strokeWidth="4" fill="none" strokeLinecap="round"/>
   </svg>
 }
 
