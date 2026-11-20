@@ -164,9 +164,15 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
         <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.terra, color: '#140910' }} onClick={done ? restart : () => setPlaying((p) => !p)}>
           {done ? 'Replay' : playing ? 'Pause' : 'Play'}
         </button>
-        <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.powder, color: '#140910' }} onClick={() => setFast((f) => !f)}>
-          {fast ? '1x' : 'Fast'}
+        <button className="rounded-full px-3 py-1 font-semibold" aria-label="Fast playback" aria-pressed={fast} style={{ background: C.powder, color: '#140910' }} onClick={() => setFast((f) => !f)}>
+          {fast ? 'Speed: fast' : 'Speed: 1×'}
         </button>
+        <button className="rounded-full px-3 py-1 font-semibold text-zinc-300 ring-1 ring-zinc-600" onClick={restart}>Restart</button>
+        <button className="rounded-full px-3 py-1 font-semibold text-zinc-300 ring-1 ring-zinc-600" disabled={done} onClick={() => {
+          setPlaying(false)
+          if (lines[lineIdx]?.kind === 'cmd' && chars < lineText(lines[lineIdx]).length) setChars(lineText(lines[lineIdx]).length)
+          else { setLineIdx((i) => Math.min(i + 1, lines.length)); setChars(0) }
+        }}>Step</button>
         <button
           className="rounded-full px-3 py-1 font-semibold text-zinc-300 ring-1 ring-zinc-600"
           onClick={() => {

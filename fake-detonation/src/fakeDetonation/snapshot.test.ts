@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchSnapshot } from './snapshot'
+import { fetchSnapshot, parseGitHubUrl } from './snapshot'
 
 afterEach(() => vi.unstubAllGlobals())
 describe('public repo fetch and recovery', () => {
@@ -37,5 +37,27 @@ describe('public repo fetch and recovery', () => {
     expect(snapshot.unread).toEqual(['AGENTS.md'])
     expect(snapshot.truncated).toBe(true)
     expect(fetcher.mock.calls.every(([url]) => !url.endsWith('/index.js'))).toBe(true)
+  })
+})
+
+describe('repo links', () => {
+  it.each(['https://github.com/psf/requests', 'github.com/psf/requests', 'https://github.com/psf/requests/', 'https://github.com/psf/requests.git', 'https://github.com/psf/requests/tree/main'])( 'normalizes %s', (url) => {
+    expect(parseGitHubUrl(url)).toEqual({ owner: 'psf', repo: 'requests' })
+  })
+
+  it.each(['', 'gibberish', 'https://gitlab.com/psf/requests'])('rejects %s without a request', async (url) => {
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    await expect(fetchSnapshot(url)).rejects.toThrow('Paste a public GitHub URL')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('reads an empty public repo tree from its default branch', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(Response.json({ owner: { login: 'psf' }, name: 'requests', default_branch: 'main' }))
+      .mockResolvedValueOnce(Response.json({ tree: [] }))
+      .mockResolvedValueOnce(Response.json({}))
+    vi.stubGlobal('fetch', fetch)
+    await expect(fetchSnapshot('psf/requests')).resolves.toMatchObject({ defaultBranch: 'main', paths: [], files: {}, unread: [] })
+    expect(fetch.mock.calls[1][0]).toContain('/git/trees/main?recursive=1')
   })
 })
