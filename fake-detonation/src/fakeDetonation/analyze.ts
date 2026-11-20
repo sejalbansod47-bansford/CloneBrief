@@ -235,7 +235,7 @@ export function buildReplay(snap: RepoSnapshot, findings = analyze(snap)): Repla
     const here = findings.filter((x) => x.phase === phase)
     for (const p of prompts[phase]) if (!here.some((x) => x.command === p)) lines.push({ kind: 'cmd', text: p, severity: 'info' })
     if (phase === 'clone') {
-      lines.push({ kind: 'say', text: `${snap.paths.length} files copied. Cloning alone runs nothing from the repo.`, severity: 'info' })
+      lines.push({ kind: 'say', text: `${snap.paths.length} file paths listed. This is a text preview — nothing was cloned or executed.`, severity: 'info' })
       if (snap.unread?.length)
         lines.push({ kind: 'say', text: `Could not read ${snap.unread.join(', ')}. Results below may be incomplete.`, severity: 'pause' })
       if (snap.truncated) lines.push({ kind: 'say', text: 'Repo is too big to list fully. Results below may be incomplete.', severity: 'pause' })

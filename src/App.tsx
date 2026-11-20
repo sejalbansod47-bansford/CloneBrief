@@ -40,7 +40,7 @@ export default function App() {
     setRepoError(''); setRepoBusy(true)
     try {
       const next = await fetchSnapshot(url)
-      setScan(createRepoCheck(next, 'Public repository · read as text'))
+      setScan(createRepoCheck(next, `Public repository · ${next.defaultBranch} · read as text`))
       scrollTo(terminal.current)
     } catch (error) { setRepoError(error instanceof Error ? error.message : 'Could not read this repository. Try a sample.') }
     finally { setRepoBusy(false) }
