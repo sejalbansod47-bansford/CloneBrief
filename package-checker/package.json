@@ -1,0 +1,1 @@
+{"name":"clonebrief-package-checker","private":true,"type":"module","scripts":{"test":"tsx --test tests/*.test.ts","check":"tsx src/cli.ts"},"devDependencies":{"tsx":"^4.20.0","typescript":"^5.9.0","@types/node":"^22.0.0"}}

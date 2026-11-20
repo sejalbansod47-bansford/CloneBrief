@@ -1,0 +1,25 @@
+{
+  "demo": true,
+  "input": {
+    "ecosystem": "npm",
+    "packages": [
+      "express"
+    ]
+  },
+  "response": {
+    "banner": "Signals, not a guarantee. Clone copies files. Install, open, and agent-run can execute code.",
+    "results": [
+      {
+        "name": "express",
+        "ecosystem": "npm",
+        "label": "real",
+        "verdict": "no_flags",
+        "signals": [],
+        "otherVulnerabilities": 0,
+        "maliciousAdvisories": [],
+        "alternative": null,
+        "alternativeMessage": "No curated alternative. We do not invent package names."
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "demo": true,
+  "input": {
+    "ecosystem": "npm",
+    "packages": [
+      "some-made-up-name-zzqx"
+    ]
+  },
+  "response": {
+    "banner": "Signals, not a guarantee. Clone copies files. Install, open, and agent-run can execute code.",
+    "results": [
+      {
+        "name": "some-made-up-name-zzqx",
+        "ecosystem": "npm",
+        "label": "does_not_exist",
+        "verdict": "do_not_install",
+        "signals": [
+          {
+            "type": "not_found",
+            "severity": "danger",
+            "title": "Package not found",
+            "why": "This package doesn't exist. AI tools invent names; attackers register them.",
+            "evidence": {
+              "url": "https://registry.npmjs.org/some-made-up-name-zzqx",
+              "field": "HTTP 404"
+            }
+          }
+        ],
+        "otherVulnerabilities": 0,
+        "maliciousAdvisories": [],
+        "alternative": null,
+        "alternativeMessage": "No curated alternative. We do not invent package names."
+      }
+    ]
+  }
+}
