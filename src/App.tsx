@@ -4,7 +4,7 @@ import { FakeDetonation, fetchSnapshot, SAMPLES } from '../fake-detonation/src/f
 import { createRepoCheck } from './repo'
 import { packageHeadline } from './results'
 import { exposures, features, incidents, stages } from './content'
-import { RiskIcon, WorkspaceSketch } from './Illustrations'
+import { RiskIcon } from './Illustrations'
 import type { checkPackages } from '../package-checker/src/checker/index'
 
 type Check = Awaited<ReturnType<typeof checkPackages>>
@@ -71,7 +71,7 @@ export default function App() {
           <p className="hero-sub">One dependency can put more than your project at risk. See how untrusted code can reach your credentials, source code and connected systems.</p>
           <div className="hero-meta"><span className="status-dot"/> Read-only analysis <span aria-hidden="true">/</span> No repository code executed</div>
         </div>
-        <figure className="hero-illustration"><WorkspaceSketch/><figcaption>Code inherits access. Trust should be deliberate.</figcaption></figure>
+        <figure className="hero-illustration"><img src="/trust-boundary.webp" width="400" height="400" alt="A pixelated cursor reaches toward an illustrated human hand through a blue opening in textured paper."/><figcaption>A small action can cross a larger trust boundary.</figcaption></figure>
         <div className="review-box" id="review">
           <div className="review-heading"><h2>Start with a repository</h2><span>PUBLIC GITHUB REPOSITORIES</span></div>
           <form onSubmit={scanRepo} className="repo-form">

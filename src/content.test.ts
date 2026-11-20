@@ -34,6 +34,7 @@ describe('supply-chain field guide', () => {
     const markup = renderToStaticMarkup(createElement(App))
     for (const feature of features) expect(markup).toContain(`id="${feature.href.slice(1)}"`)
     expect(markup).toContain('Signals, not a guarantee.')
+    expect(markup).toContain('src="/trust-boundary.webp"')
     expect(markup).not.toMatch(/Laptop feeling|check the vibes|trust issues|you’re fine/i)
     expect(markup).toContain('No curated suggestion to show. We do not invent package names.')
   })
