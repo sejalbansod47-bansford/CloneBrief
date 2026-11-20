@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { FakeDetonation, fetchSnapshot, SAMPLES } from '../fake-detonation/src/fakeDetonation'
-import { createRepoCheck } from './repo'
+import { createRepoCheck, repoPackageCount } from './repo'
 import { packageHeadline } from './results'
 import { exposures, features, incidents, stages } from './content'
 import { RiskIcon } from './Illustrations'
@@ -28,6 +28,8 @@ export default function App() {
   const terminal = useRef<HTMLElement>(null)
   const packageSection = useRef<HTMLElement>(null)
   const alternative = check?.results.find(result => result.alternative)?.alternative
+  const repoManifest = snapshot.files['package.json']
+  const packageCount = repoPackageCount(repoManifest)
   const scrollTo = (element: HTMLElement | null) => element?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })
 
   function chooseSample(index: number) {
@@ -122,7 +124,7 @@ export default function App() {
         <section className="section wrap terminal-section" id="replay" ref={terminal} aria-labelledby="replay-title">
           <div className="section-heading"><div><span className="eyebrow">04 / Review tool</span><h2 id="replay-title">Preview the execution path.</h2><p className="heading-description">Potential commands, grouped by when they could run. A text simulation—not a sandbox.</p></div><span className="source-pill">{source}</span></div>
           <FakeDetonation replay={replay} speed={170} className="replay-terminal"/>
-          <div className="terminal-notes"><p>Selected files only. Actual runtime behavior and transitive dependencies are not audited.</p>{snapshot.files['package.json'] && <button className="text-button" onClick={() => { setManifest(snapshot.files['package.json']); setEcosystem('npm'); setCheck(null); setPackageError(''); scrollTo(packageSection.current) }}>Check this {source.startsWith('Sample') ? 'sample’s' : 'repository’s'} package.json <Arrow/></button>}</div>
+          <div className="terminal-notes"><p>Selected files only. Actual runtime behavior and transitive dependencies are not audited.</p>{repoManifest && (packageCount !== null && packageCount > 0 ? <button className="text-button" onClick={() => { setManifest(repoManifest); setEcosystem('npm'); setCheck(null); setPackageError(''); scrollTo(packageSection.current) }}>Check this {source.startsWith('Sample') ? 'sample’s' : 'repository’s'} package.json <Arrow/></button> : <p>{packageCount === 0 ? 'No dependency entries in this manifest.' : 'This manifest needs manual review.'} <a className="source-link" href="#packages">Open package checker <Arrow/></a></p>)}</div>
         </section>
 
         <section className="section wrap package-section" id="packages" ref={packageSection} aria-labelledby="packages-title">

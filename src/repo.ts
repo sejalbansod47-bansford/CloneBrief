@@ -1,5 +1,15 @@
 import { buildReplay } from '../fake-detonation/src/fakeDetonation/analyze'
+import { parseInput } from '../package-checker/src/checker/input'
 import type { RepoSnapshot } from '../fake-detonation/src/fakeDetonation/types'
+
+export function repoPackageCount(manifest: string | undefined): number | null {
+  if (!manifest) return null
+  try {
+    return parseInput({ manifest, ecosystem: 'npm' }).length
+  } catch {
+    return null
+  }
+}
 
 export function createRepoCheck(snapshot: RepoSnapshot, source: string) {
   try {

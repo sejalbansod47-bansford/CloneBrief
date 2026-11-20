@@ -35,6 +35,8 @@ describe('supply-chain field guide', () => {
     for (const feature of features) expect(markup).toContain(`id="${feature.href.slice(1)}"`)
     expect(markup).toContain('Signals, not a guarantee.')
     expect(markup).toContain('src="/trust-boundary.webp"')
+    expect(markup).toContain('No dependency entries in this manifest.')
+    expect(markup).not.toContain('Check this sample')
     expect(markup).not.toMatch(/Laptop feeling|check the vibes|trust issues|you’re fine/i)
     expect(markup).toContain('No curated suggestion to show. We do not invent package names.')
   })
