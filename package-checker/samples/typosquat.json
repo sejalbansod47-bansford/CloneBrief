@@ -1,0 +1,49 @@
+{
+  "demo": true,
+  "input": {
+    "ecosystem": "npm",
+    "packages": [
+      "expresss"
+    ]
+  },
+  "response": {
+    "banner": "Signals, not a guarantee. Clone copies files. Install, open, and agent-run can execute code.",
+    "results": [
+      {
+        "name": "expresss",
+        "ecosystem": "npm",
+        "label": "one_typo_from_famous",
+        "verdict": "pause",
+        "signals": [
+          {
+            "type": "typosquat",
+            "severity": "warn",
+            "title": "Similar to a curated package",
+            "why": "A similar name may be an accidental typo or impersonation.",
+            "evidence": {
+              "url": "https://openjsf.org/projects",
+              "field": "express"
+            }
+          }
+        ],
+        "otherVulnerabilities": 0,
+        "maliciousAdvisories": [],
+        "alternative": {
+          "id": "express",
+          "names": [
+            "express"
+          ],
+          "github": "https://github.com/expressjs/express",
+          "docs": "https://expressjs.com",
+          "ecosystem": "npm",
+          "tags": [
+            "general"
+          ],
+          "trust_basis": "openjs",
+          "trust_url": "https://openjsf.org/projects"
+        },
+        "alternativeMessage": "Curated similar name; verify it fits your task."
+      }
+    ]
+  }
+}

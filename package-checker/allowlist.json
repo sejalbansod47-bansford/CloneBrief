@@ -1,0 +1,156 @@
+[
+  {
+    "id": "express",
+    "names": [
+      "express"
+    ],
+    "github": "https://github.com/expressjs/express",
+    "docs": "https://expressjs.com",
+    "ecosystem": "npm",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "openjs",
+    "trust_url": "https://openjsf.org/projects"
+  },
+  {
+    "id": "fastify",
+    "names": [
+      "fastify"
+    ],
+    "github": "https://github.com/fastify/fastify",
+    "docs": "https://fastify.dev",
+    "ecosystem": "npm",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "openjs",
+    "trust_url": "https://openjsf.org/projects"
+  },
+  {
+    "id": "react",
+    "names": [
+      "react"
+    ],
+    "github": "https://github.com/facebook/react",
+    "docs": "https://react.dev",
+    "ecosystem": "npm",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://www.npmjs.com/package/react"
+  },
+  {
+    "id": "next",
+    "names": [
+      "next"
+    ],
+    "github": "https://github.com/vercel/next.js",
+    "docs": "https://nextjs.org/docs",
+    "ecosystem": "npm",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://www.npmjs.com/package/next"
+  },
+  {
+    "id": "flask",
+    "names": [
+      "flask"
+    ],
+    "github": "https://github.com/pallets/flask",
+    "docs": "https://flask.palletsprojects.com",
+    "ecosystem": "pypi",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://pypi.org/project/Flask/"
+  },
+  {
+    "id": "django",
+    "names": [
+      "django"
+    ],
+    "github": "https://github.com/django/django",
+    "docs": "https://docs.djangoproject.com",
+    "ecosystem": "pypi",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://pypi.org/project/Django/"
+  },
+  {
+    "id": "requests",
+    "names": [
+      "requests"
+    ],
+    "github": "https://github.com/psf/requests",
+    "docs": "https://requests.readthedocs.io",
+    "ecosystem": "pypi",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://pypi.org/project/requests/"
+  },
+  {
+    "id": "numpy",
+    "names": [
+      "numpy"
+    ],
+    "github": "https://github.com/numpy/numpy",
+    "docs": "https://numpy.org/doc",
+    "ecosystem": "pypi",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://pypi.org/project/numpy/"
+  },
+  {
+    "id": "pandas",
+    "names": [
+      "pandas"
+    ],
+    "github": "https://github.com/pandas-dev/pandas",
+    "docs": "https://pandas.pydata.org/docs",
+    "ecosystem": "pypi",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://pypi.org/project/pandas/"
+  },
+  {
+    "id": "scikit-learn",
+    "names": [
+      "scikit-learn"
+    ],
+    "github": "https://github.com/scikit-learn/scikit-learn",
+    "docs": "https://scikit-learn.org",
+    "ecosystem": "pypi",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "attested_popular",
+    "trust_url": "https://pypi.org/project/scikit-learn/"
+  },
+  {
+    "id": "pip",
+    "names": [
+      "pip"
+    ],
+    "github": "https://github.com/pypa/pip",
+    "docs": "https://pip.pypa.io",
+    "ecosystem": "pypi",
+    "tags": [
+      "general"
+    ],
+    "trust_basis": "pypa",
+    "trust_url": "https://www.pypa.io/en/latest/projects/#pip"
+  }
+]
