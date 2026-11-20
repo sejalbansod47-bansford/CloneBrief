@@ -1,0 +1,4 @@
+{
+ "compilerOptions": { "target": "ES2023", "lib": ["ES2023", "DOM"], "module": "ESNext", "moduleResolution": "bundler", "allowImportingTsExtensions": true, "resolveJsonModule": true, "esModuleInterop": true, "skipLibCheck": true, "noEmit": true, "jsx": "react-jsx", "types": ["vite/client", "node"] },
+ "include": ["src", "server", "vite.config.ts", "package-checker/src/checker", "fake-detonation/src/fakeDetonation"]
+}

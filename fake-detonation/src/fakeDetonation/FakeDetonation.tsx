@@ -3,7 +3,7 @@ import { buildReplay } from './analyze'
 import type { Phase, Replay, ReplayLine, RepoSnapshot, Severity } from './types'
 
 // Sejal palette
-const C = { wine: '#7C113A', powder: '#B9D6FC', terra: '#EA6244', blush: '#FBEAE7' }
+const C = { wine: '#68002C', powder: '#A6C9DD', terra: '#E098AC', blush: '#FFF8D5' }
 
 const PHASE_LABEL: Record<Phase, string> = { clone: 'Clone', open: 'Open', agent: 'Agent', install: 'Install', run: 'Run' }
 const PHASES: Phase[] = ['clone', 'open', 'agent', 'install', 'run']
@@ -33,13 +33,21 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
   const [chars, setChars] = useState(0)
   const [playing, setPlaying] = useState(autoPlay)
   const [fast, setFast] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setLineIdx(0)
+    const media = matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReducedMotion(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  useEffect(() => {
+    setLineIdx(reducedMotion ? replay?.lines.length ?? 0 : 0)
     setChars(0)
-    setPlaying(autoPlay)
-  }, [replay, autoPlay])
+    setPlaying(autoPlay && !reducedMotion)
+  }, [replay, autoPlay, reducedMotion])
 
   const lines = replay?.lines ?? []
   const done = lineIdx >= lines.length
@@ -85,7 +93,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
         <span className="h-3 w-3 rounded-full" style={{ background: C.terra }} />
         <span className="h-3 w-3 rounded-full" style={{ background: C.blush }} />
         <span className="h-3 w-3 rounded-full" style={{ background: C.powder }} />
-        <span className="ml-2 truncate font-mono">fake-detonation · {replay.repo}</span>
+        <span className="ml-2 truncate font-mono">Execution preview · {replay.repo}</span>
         <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider" style={{ background: C.blush, color: C.wine }}>
           Simulation · nothing runs
         </span>
@@ -114,7 +122,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
       </div>
 
       {/* terminal */}
-      <div ref={scrollRef} className="h-80 overflow-y-auto px-4 py-3 font-mono text-[13px] leading-relaxed sm:h-96" aria-live="polite">
+      <div ref={scrollRef} className="h-80 overflow-y-auto px-4 py-3 font-mono text-[13px] leading-relaxed sm:h-96" role="region" aria-label="Simulated commands, never executed" tabIndex={0}>
         {lines.slice(0, lineIdx + 1).map((l, i) => {
           const full = lineText(l)
           const text = i === lineIdx && !done && l.kind === 'cmd' ? full.slice(0, chars) : full
@@ -153,7 +161,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
 
       {/* controls */}
       <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2 text-xs" style={{ borderColor: '#3f3f46', background: '#1e0e17' }}>
-        <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.terra, color: '#fff' }} onClick={done ? restart : () => setPlaying((p) => !p)}>
+        <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.terra, color: '#140910' }} onClick={done ? restart : () => setPlaying((p) => !p)}>
           {done ? 'Replay' : playing ? 'Pause' : 'Play'}
         </button>
         <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.powder, color: '#140910' }} onClick={() => setFast((f) => !f)}>

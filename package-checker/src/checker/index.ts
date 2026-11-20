@@ -55,7 +55,7 @@ async function checkOne(p: Package, options: Options) {
       else otherVulnerabilities++;
     }
   } catch(error) {signal('lookup_failed','warn','Advisory lookup failed','Malicious-package advisories could not be checked.',osv,String(error));}
-  if(otherVulnerabilities) signal('vulnerability_count','info',`${otherVulnerabilities} other advisories`,'Non-malicious advisories need version-specific review.',osv,'vulns');
+  if(otherVulnerabilities) signal('vulnerability_count','info',`${otherVulnerabilities} other advisories`,'Non-malicious advisories need version-specific review.',`https://osv.dev/list?q=${encodeURIComponent(p.name)}&ecosystem=${p.ecosystem==='npm'?'npm':'PyPI'}`,'vulns');
   const verdict=signals.some(s=>s.severity==='danger')?'do_not_install':signals.some(s=>s.severity==='warn')?'pause':'no_flags';
   const label=missing?'does_not_exist':signals.some(s=>s.type==='lookup_failed')?'lookup_failed':!exact&&closest?.d<=2?'one_typo_from_famous':fresh?'brand_new':'real';
   return {...p,label,verdict,signals,otherVulnerabilities,maliciousAdvisories,alternative:!exact&&closest?.d<=2?closest.row:null,alternativeMessage:!exact&&closest?.d<=2?'Curated similar name; verify it fits your task.':'No curated alternative. We do not invent package names.'};
