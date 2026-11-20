@@ -13,47 +13,59 @@ function stripComment(line: string): string {
   return line;
 }
 export function cleanName(value: string, ecosystem: Ecosystem): string {
-  const name = value.trim().replace(/^['"]|['",;]$/g, '');
+  const name = value.trim().replace(/^['"`(]+|['"`,;:.!?)]+$/g, '');
   const match = ecosystem === 'npm' ? name.match(/^(@[a-z0-9._-]+\/[a-z0-9._-]+|[a-z0-9._-]+)/i) : name.match(/^[a-z0-9][a-z0-9._-]*/i);
   if (!match || /^(https?:|git\+|file:|workspace:)/i.test(name)) throw new Error(`Unsupported package specifier: ${value}`);
   return match[0].toLowerCase();
 }
-export function parseInput(input: Input): Package[] {
+const DEP_FIELDS = ['dependencies','devDependencies','optionalDependencies','peerDependencies'];
+const PYPI_LINE = /^[a-z0-9][\w.-]*\s*(\[[^\]]*\])?\s*(?:[<>=!~].*|;.*|@.*)?$/i;
+const NPM_LINE = /^(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+(?:@\S*)?$/i;
+const COMMAND = String.raw`npm\s+(?:i|install|add)|yarn\s+add|pnpm\s+(?:add|i|install)|bun\s+(?:add|i|install)|npx|pip3?\s+install|uv\s+(?:add|pip\s+install)|poetry\s+add`;
+const STOP_WORDS = new Set(['and','or','then','to','if']);
+const VERSION_SPEC = /^(?:npm:|[\^~<>=*]|\d|latest$|next$|workspace:|git|github:|https?:|file:)/;
+function readPackageJson(raw: string): Record<string, any> | undefined {
+  const parse = (text: string) => { try { const json = JSON.parse(text); return json && typeof json === 'object' && !Array.isArray(json) ? json : undefined; } catch {} };
+  const json = parse(raw);
+  if (json) return DEP_FIELDS.some(field => field in json) || !Object.values(json).every(v => typeof v === 'string' && VERSION_SPEC.test(v)) ? json : {dependencies: json};
+  const fragment = raw.startsWith('{') ? undefined : parse(`{${raw.replace(/,\s*$/, '')}}`);
+  if (fragment && DEP_FIELDS.some(field => field in fragment)) return fragment;
+  if (fragment && Object.keys(fragment).length && Object.values(fragment).every(v => typeof v === 'string' && VERSION_SPEC.test(v))) return {dependencies: fragment};
+}
+export function parseInput(input: Input, skipped: string[] = []): Package[] {
   const out: Package[] = [];
   const add = (name: string, ecosystem: Ecosystem) => out.push({name: cleanName(name, ecosystem), ecosystem});
+  const tryAdd = (name: string, ecosystem: Ecosystem) => { try { add(name, ecosystem); } catch { skipped.push(name.trim()); } };
   const eco = input.ecosystem === 'auto' ? undefined : input.ecosystem;
   if (input.packages?.length && !eco) throw new Error('Explicit packages require an ecosystem');
+  if ((input.packages?.length ?? 0) > 50) throw new Error('Maximum 50 packages');
   input.packages?.forEach(n => add(n, eco!));
-  const raw = input.manifest?.trim();
+  const raw = input.manifest?.replace(/\r/g, '').trim();
   if (raw) {
-    let packageJson: Record<string, any> | undefined;
-    try {
-      const json = JSON.parse(raw);
-      if (json && typeof json === 'object' && ['dependencies','devDependencies','optionalDependencies','peerDependencies'].some(field => field in json)) packageJson = json;
-    } catch {}
+    const packageJson = eco === 'pypi' ? undefined : readPackageJson(raw);
     let commands = false;
-    for (const line of packageJson ? [] : raw.split('\n').map(stripComment)) {
-      const m = line.match(/\b(npm\s+(?:i|install|add)|yarn\s+add|pnpm\s+add|npx|pip3?\s+install|uv\s+add|poetry\s+add)\s+([^`\n]+)/);
-      if (!m) continue;
-      commands = true;
-      const ecosystem: Ecosystem = /^(pip|uv|poetry)/.test(m[1]) ? 'pypi' : 'npm';
-      for (const token of m[2].split(/\s+/)) {
-        if (/^(?:&&|\||;|#)/.test(token)) break;
-        if (!token || token.startsWith('-')) continue;
-        if (/^[`]/.test(token)) break;
-        add(token, ecosystem);
+    for (const line of packageJson ? [] : raw.split('\n').flatMap(line => stripComment(line).split(/(?<=[.!?])\s+/))) {
+      for (const m of line.matchAll(new RegExp(`\\b(${COMMAND})\\s+((?:(?!\\b(?:${COMMAND})\\s)[^\`\\n])+)`, 'g'))) {
+        commands = true;
+        const ecosystem: Ecosystem = /^(pip|uv|poetry)/.test(m[1]) ? 'pypi' : 'npm';
+        for (const token of m[2].split(/\s+/)) {
+          if (/^(?:&&|\||;|#|>)/.test(token) || STOP_WORDS.has(token.toLowerCase())) break;
+          if (!token || token.startsWith('-')) continue;
+          tryAdd(token, ecosystem);
+          if (m[1] === 'npx' || /[.:!?)]$/.test(token)) break;
+        }
       }
     }
     if (!commands) {
-      if (!eco && !packageJson) throw new Error('Manifest requires ecosystem, or install commands for auto detection');
-      if (packageJson || eco === 'npm') {
-        const json = packageJson ?? JSON.parse(raw);
-        for (const field of ['dependencies','devDependencies','optionalDependencies','peerDependencies']) {
-          if (json[field]) Object.entries(json[field]).forEach(([name, specifier]) => {
-            add(typeof specifier === 'string' && specifier.startsWith('npm:') ? specifier.slice(4) : name, 'npm');
+      if (packageJson) {
+        for (const field of DEP_FIELDS) {
+          if (packageJson[field] && typeof packageJson[field] === 'object') Object.entries(packageJson[field]).forEach(([name, specifier]) => {
+            tryAdd(typeof specifier === 'string' && specifier.startsWith('npm:') ? specifier.slice(4).replace(/(.)@.*$/, '$1') : name, 'npm');
           });
         }
-      } else if (/^\s*\[/m.test(raw)) {
+      } else if (raw.startsWith('{')) {
+        throw new Error("That looks like a package.json but it isn't valid JSON. Check for a missing quote or a trailing comma.");
+      } else if (eco !== 'npm' && /^\s*\[/m.test(raw)) {
         let section = '', collecting = false;
         for (const line of raw.split('\n').map(stripComment)) {
           const header = line.match(/^\s*\[([^\]]+)\]/);
@@ -63,19 +75,25 @@ export function parseInput(input: Input): Package[] {
             if (collecting) {
               for (const m of line.matchAll(/"(?:\\.|[^"\\])*"|'[^']*'|\]/g)) {
                 if (m[0] === ']') { collecting = false; break; }
-                add(m[0].slice(1,-1), 'pypi');
+                tryAdd(m[0].slice(1,-1), 'pypi');
               }
             }
-          } else if (/^tool\.poetry\.(?:dependencies|group\..+\.dependencies)$/.test(section)) {
-            const m = line.match(/^\s*([\w.-]+)\s*=/); if (m && m[1] !== 'python') add(m[1], 'pypi');
+          } else if (/^tool\.poetry\.(?:dependencies|group\..+\.dependencies)$/.test(section) || section === 'packages' || section === 'dev-packages') {
+            const m = line.match(/^\s*([\w.-]+)\s*=/); if (m && m[1] !== 'python') tryAdd(m[1], 'pypi');
           }
         }
       } else {
-        for (const line of raw.split('\n')) { const s = stripComment(line).trim(); if (s) { if (s.startsWith('-')) throw new Error('Requirements options/includes are not supported'); add(s, 'pypi'); } }
+        const lines = raw.split('\n').map(line => stripComment(line).trim()).filter(Boolean).flatMap(line => line.split(/,\s*(?=[@a-z0-9])/i));
+        const looksPypi = lines.some(line => /^-[rcei]\b|^--/.test(line) || /[<>=!~]=|\[[^\]]*\]|;/.test(line));
+        const ecosystem = eco ?? (looksPypi ? 'pypi' : undefined);
+        if (!ecosystem) throw new Error("Couldn't tell npm from PyPI. Pick one in the dropdown, or paste the install command your chatbot gave you.");
+        for (const line of lines) {
+          if (line.startsWith('-')) { skipped.push(line); continue; }
+          if ((ecosystem === 'pypi' ? PYPI_LINE : NPM_LINE).test(line)) tryAdd(ecosystem === 'npm' ? line.replace(/(.)@.*$/, '$1') : line, ecosystem);
+          else skipped.push(line.length > 60 ? `${line.slice(0, 57)}…` : line);
+        }
       }
     }
   }
-  const unique = [...new Map(out.map(p => [`${p.ecosystem}:${p.name}`,p])).values()];
-  if (unique.length > 50) throw new Error('Maximum 50 packages');
-  return unique;
+  return [...new Map(out.map(p => [`${p.ecosystem}:${p.name}`,p])).values()];
 }

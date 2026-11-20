@@ -1,6 +1,7 @@
 import allowlist from '../../allowlist.json' with { type: 'json' };
 import { parseInput, type Input, type Package } from './input.ts';
 export { parseInput } from './input.ts';
+export const MAX_PACKAGES = 50;
 export const BANNER = 'Signals, not a guarantee. Clone copies files. Install, open, and agent-run can execute code.';
 export type Signal = { type: string; severity: 'danger' | 'warn' | 'info'; title: string; why: string; evidence: { url: string; field: string } };
 export type Options = { fetch?: typeof fetch; now?: number; concurrency?: number };
@@ -57,14 +58,16 @@ async function checkOne(p: Package, options: Options) {
   } catch(error) {signal('lookup_failed','warn','Advisory lookup failed','Malicious-package advisories could not be checked.',osv,String(error));}
   if(otherVulnerabilities) signal('vulnerability_count','info',`${otherVulnerabilities} other advisories`,'Non-malicious advisories need version-specific review.',`https://osv.dev/list?q=${encodeURIComponent(p.name)}&ecosystem=${p.ecosystem==='npm'?'npm':'PyPI'}`,'vulns');
   const verdict=signals.some(s=>s.severity==='danger')?'do_not_install':signals.some(s=>s.severity==='warn')?'pause':'no_flags';
-  const label=missing?'does_not_exist':signals.some(s=>s.type==='lookup_failed')?'lookup_failed':!exact&&closest?.d<=2?'one_typo_from_famous':fresh?'brand_new':'real';
+  const label=missing?'does_not_exist':maliciousAdvisories.length?'known_malicious':signals.some(s=>s.type==='lookup_failed')?'lookup_failed':!exact&&closest?.d<=2?'one_typo_from_famous':fresh?'brand_new':'real';
   return {...p,label,verdict,signals,otherVulnerabilities,maliciousAdvisories,alternative:!exact&&closest?.d<=2?closest.row:null,alternativeMessage:!exact&&closest?.d<=2?'Curated similar name; verify it fits your task.':'No curated alternative. We do not invent package names.'};
 }
 export async function checkPackages(input: Input, options: Options = {}) {
-  const packages=parseInput(input);
+  const skipped: string[]=[];
+  const found=parseInput(input,skipped);
+  const packages=found.slice(0,MAX_PACKAGES);
   const results: Awaited<ReturnType<typeof checkOne>>[] = new Array(packages.length);
   let cursor=0;
   const limit=Math.max(1,Math.min(8,Math.floor(options.concurrency??4)||4));
   await Promise.all(Array.from({length:Math.min(limit,packages.length)},async()=>{while(cursor<packages.length){const i=cursor++;results[i]=await checkOne(packages[i],options);}}));
-  return {banner:BANNER,results};
+  return {banner:BANNER,results,skipped:[...new Set(skipped)].slice(0,20),notChecked:found.length-packages.length};
 }

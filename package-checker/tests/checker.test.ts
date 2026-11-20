@@ -47,7 +47,7 @@ test('404, typo and curated alternative',async()=>{
 test('new package, hooks, MAL and ordinary advisories',async()=>{
   const registry={...old,time:{created:new Date().toISOString()},versions:{'1':{scripts:{install:'echo test'}}}};
   const {results:[r]}=await checkPackages({ecosystem:'npm',packages:['zzqx-example']},{fetch:mock(registry,{vulns:[{id:'MAL-1'},{id:'GHSA-test'}]})});
-  assert.equal(r.label,'brand_new');assert.equal(r.otherVulnerabilities,1);assert.equal(r.verdict,'do_not_install');assert.equal(r.alternative,null);
+  assert.equal(r.label,'known_malicious');assert.equal(r.otherVulnerabilities,1);assert.equal(r.verdict,'do_not_install');assert.equal(r.alternative,null);
   for(const t of ['too_new','install_script','malicious_advisory']) assert.ok(r.signals.some(s=>s.type===t));
 });
 test('failures never clean',async()=>{
@@ -73,4 +73,23 @@ test('parses JSON, requirements, pyproject and mixed chatbot commands',()=>{
   assert.deepEqual(parseInput({ecosystem:'auto',manifest:'Try:\n```sh\nnpm i react express\npip3 install requests\nyarn add next\npnpm add fastify\nnpx react\nuv add numpy\npoetry add pandas\n```'}).map(p=>p.name),['react','express','requests','next','fastify','numpy','pandas']);
   assert.throws(()=>parseInput({ecosystem:'npm',manifest:'{'}));
   assert.throws(()=>parseInput({ecosystem:'npm',packages:Array.from({length:51},(_,i)=>`p${i}`)}));
+});
+test('student inputs: plain requirements, dependency fragments, chatbot prose and skipped specifiers',()=>{
+  const names=(manifest:string,ecosystem:'auto'|'npm'|'pypi'='auto',skipped:string[]=[])=>parseInput({ecosystem,manifest},skipped).map(p=>`${p.ecosystem}:${p.name}`);
+  assert.deepEqual(names('flask==3.0.0\r\nrequests>=2.31\nnumpy\n-r base.txt\n--index-url https://x'),['pypi:flask','pypi:requests','pypi:numpy']);
+  assert.deepEqual(names('"react": "^18.2.0",\n"axios": "^1.6.0",'),['npm:react','npm:axios']);
+  assert.deepEqual(names('{"name":"x","version":"1.0.0"}'),[]);
+  assert.deepEqual(names('react, lodash\naxios@1.6','npm'),['npm:react','npm:lodash','npm:axios']);
+  assert.deepEqual(names('Run pip install requests. Then npx create-react-app my-app and bun add hono'),['pypi:requests','npm:create-react-app','npm:hono']);
+  assert.deepEqual(names('pip install pandas and then python main.py'),['pypi:pandas']);
+  const skipped:string[]=[];
+  assert.deepEqual(names('npm install https://github.com/x/y left-pad','auto',skipped),['npm:left-pad']);
+  assert.deepEqual(skipped,['https://github.com/x/y']);
+  assert.throws(()=>parseInput({ecosystem:'auto',manifest:'react\nlodash'}),/Pick one in the dropdown/);
+  assert.throws(()=>parseInput({ecosystem:'auto',manifest:'{"dependencies":{"react":"^18",}}'}),/isn't valid JSON/);
+});
+test('large manifests check the first 50 and report the rest',async()=>{
+  const manifest=JSON.stringify({dependencies:Object.fromEntries(Array.from({length:60},(_,i)=>[`p${i}`,'*']))});
+  const r=await checkPackages({ecosystem:'auto',manifest},{fetch:mock()});
+  assert.equal(r.results.length,50);assert.equal(r.notChecked,10);
 });
