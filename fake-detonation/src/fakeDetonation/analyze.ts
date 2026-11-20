@@ -45,7 +45,12 @@ export function stripJsonc(text: string): string {
       i = end === -1 ? text.length : end + 1
     } else if (ch === ',') {
       let j = i + 1
-      while (j < text.length && /\s/.test(text[j])) j++
+      for (;;) {
+        while (j < text.length && /\s/.test(text[j])) j++
+        if (text.startsWith('//', j)) while (j < text.length && text[j] !== '\n') j++
+        else if (text.startsWith('/*', j)) j = text.indexOf('*/', j + 2) === -1 ? text.length : text.indexOf('*/', j + 2) + 2
+        else break
+      }
       if (text[j] !== '}' && text[j] !== ']') out += ch
     } else out += ch
   }

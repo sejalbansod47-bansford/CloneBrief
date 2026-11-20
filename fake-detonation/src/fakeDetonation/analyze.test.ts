@@ -44,6 +44,7 @@ describe('analyze', () => {
   it('parses JSONC without touching strings', () => {
     const text = '{\n // c\n "a": "x, ]", /* b */ "b": [1, 2,],\n}'
     expect(JSON.parse(stripJsonc(text))).toEqual({ a: 'x, ]', b: [1, 2] })
+    expect(JSON.parse(stripJsonc('{ "a": [1, // one\n /* two */ ], }'))).toEqual({ a: [1] })
   })
 
   const snap = (files: Record<string, string>): RepoSnapshot => ({ owner: 'o', repo: 'r', defaultBranch: 'main', paths: Object.keys(files), files })
