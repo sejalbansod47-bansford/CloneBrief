@@ -54,9 +54,11 @@ export async function fetchSnapshot(url: string, opts: FetchOptions = {}): Promi
   await Promise.all(
     interestingPaths(paths).map(async (p) => {
       if ((sizes.get(p) ?? 0) > MAX_FILE_BYTES) return void unread.push(p)
-      const res = await fetch(`https://raw.githubusercontent.com/${meta.owner.login}/${meta.name}/${encodeURIComponent(branch)}/${p.split('/').map(encodeURIComponent).join('/')}`, { signal: AbortSignal.timeout(15000) }).catch(() => undefined)
-      if (res?.ok) files[p] = await res.text()
-      else unread.push(p)
+      try {
+        const res = await fetch(`https://raw.githubusercontent.com/${meta.owner.login}/${meta.name}/${encodeURIComponent(branch)}/${p.split('/').map(encodeURIComponent).join('/')}`, { signal: AbortSignal.timeout(15000) })
+        if (!res.ok) throw new Error('File unavailable')
+        files[p] = await res.text()
+      } catch { unread.push(p) }
     }),
   )
   return {

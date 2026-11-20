@@ -13,6 +13,17 @@ describe('public repo fetch and recovery', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{"private":true}')))
     await expect(fetchSnapshot('owner/repo')).rejects.toThrow('only reads public repos')
   })
+  it('keeps the snapshot with an unread warning when headers arrive but the file body times out', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url.includes('/git/trees/')) return new Response('{"tree":[{"type":"blob","path":"package.json","size":10}]}')
+      if (url.includes('/users/')) return new Response('{}')
+      if (url.includes('raw.githubusercontent.com')) return { ok: true, text: async () => { throw new DOMException('Body timed out', 'TimeoutError') } }
+      return new Response('{"private":false,"owner":{"login":"owner"},"name":"repo","default_branch":"main"}')
+    }))
+    const snapshot = await fetchSnapshot('owner/repo')
+    expect(snapshot.unread).toEqual(['package.json'])
+    expect(snapshot.files).toEqual({})
+  })
   it('only reads selected text files and carries incomplete-read warnings', async () => {
     const fetcher = vi.fn(async (url: string) => {
       if (url.includes('/git/trees/')) return new Response(JSON.stringify({ tree: [{ type: 'blob', path: 'package.json', size: 10 }, { type: 'blob', path: 'index.js', size: 10 }, { type: 'blob', path: 'AGENTS.md', size: 200_001 }], truncated: true }))
