@@ -335,6 +335,7 @@ footer>a:last-child { text-decoration: underline; text-underline-offset: 4px; }
   html{scroll-padding-bottom:90px}
   button,a,select,input,summary{min-height:44px;min-width:44px}
   a{display:inline-flex;align-items:center}
+  p a{display:inline;min-height:0;min-width:0}
   .repo-form input,textarea{font-size:16px}
   .samples button{font-size:10px}
   .package-actions .text-button{font-size:10px}
