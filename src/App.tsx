@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { buildReplay, FakeDetonation, fetchSnapshot, SAMPLES } from '../fake-detonation/src/fakeDetonation'
-import type { RepoSnapshot } from '../fake-detonation/src/fakeDetonation'
+import { FakeDetonation, fetchSnapshot, SAMPLES } from '../fake-detonation/src/fakeDetonation'
+import { createRepoCheck } from './repo'
 import type { checkPackages } from '../package-checker/src/checker/index'
 
 type Check = Awaited<ReturnType<typeof checkPackages>>
@@ -38,8 +38,7 @@ function Laptop({ mood = 0, small = false }: { mood?: number; small?: boolean })
 export default function App() {
   const [tab, setTab] = useState<'repo' | 'package'>('repo')
   const [url, setUrl] = useState('')
-  const [snapshot, setSnapshot] = useState<RepoSnapshot>(SAMPLES[0].snapshot)
-  const [source, setSource] = useState('sample · install-script trap')
+  const [{ snapshot, replay, source }, setScan] = useState(() => createRepoCheck(SAMPLES[0].snapshot, 'sample · install-script trap'))
   const [repoBusy, setRepoBusy] = useState(false)
   const [repoError, setRepoError] = useState('')
   const [manifest, setManifest] = useState('')
@@ -51,19 +50,17 @@ export default function App() {
   const [flipped, setFlipped] = useState<number | null>(null)
   const terminal = useRef<HTMLElement>(null)
   const packageSection = useRef<HTMLElement>(null)
-  const replay = useMemo(() => buildReplay(snapshot), [snapshot])
   const alternative = check?.results.find(result => result.alternative)?.alternative
   const scrollTo = (element: HTMLElement | null) => element?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })
   function chooseSample(index: number) {
-    setSnapshot(SAMPLES[index].snapshot)
-    setSource(`sample · ${SAMPLES[index].label.toLowerCase()}`)
+    setScan(createRepoCheck(SAMPLES[index].snapshot, `sample · ${SAMPLES[index].label.toLowerCase()}`))
     setRepoError('')
     scrollTo(terminal.current)
   }
   async function scanRepo(event: FormEvent) {
     event.preventDefault()
     setRepoError(''); setRepoBusy(true)
-    try { const next = await fetchSnapshot(url); setSnapshot(next); setSource('live public repo · read as text'); scrollTo(terminal.current) }
+    try { const next = await fetchSnapshot(url); setScan(createRepoCheck(next, 'live public repo · read as text')); scrollTo(terminal.current) }
     catch (error) { setRepoError(error instanceof Error ? error.message : 'Could not read this repo. Try a sample.') }
     finally { setRepoBusy(false) }
   }
