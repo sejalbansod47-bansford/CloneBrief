@@ -180,7 +180,7 @@ export function buildReplay(snap: RepoSnapshot, findings = analyze(snap)): Repla
       continue
     }
     const here = findings.filter((x) => x.phase === phase)
-    lines.push({ kind: 'cmd', text: prompt, severity: 'info' })
+    if (!here.some((x) => x.command === prompt)) lines.push({ kind: 'cmd', text: prompt, severity: 'info' })
     if (!here.length) {
       lines.push({ kind: 'say', text: 'Nothing found that auto-runs here. That is not a guarantee.', severity: 'info' })
       continue
