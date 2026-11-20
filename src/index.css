@@ -331,3 +331,4 @@ footer>a:last-child { text-decoration: underline; text-underline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+.replay-terminal [tabindex]:focus-visible, .replay-terminal button:focus-visible { outline: 3px solid #A6C9DD; outline-offset: -3px; }

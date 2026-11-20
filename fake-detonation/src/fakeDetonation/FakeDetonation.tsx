@@ -8,7 +8,7 @@ const C = { wine: '#68002C', powder: '#A6C9DD', terra: '#E098AC', blush: '#FFF8D
 const PHASE_LABEL: Record<Phase, string> = { clone: 'Clone', open: 'Open', agent: 'Agent', install: 'Install', run: 'Run' }
 const PHASES: Phase[] = ['clone', 'open', 'agent', 'install', 'run']
 
-const sevColor = (s: Severity) => (s === 'danger' ? C.terra : s === 'pause' ? C.powder : '#d4d4d8')
+const sevColor = (s: Severity) => (s === 'danger' ? C.terra : s === 'pause' ? C.powder : C.blush)
 const sevTag = (s: Severity) => (s === 'danger' ? '[DANGER]' : s === 'pause' ? '[PAUSE]' : '')
 
 interface Props {
@@ -50,7 +50,8 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
   }, [replay, autoPlay, reducedMotion])
 
   const lines = replay?.lines ?? []
-  const done = lineIdx >= lines.length
+  const done = reducedMotion || lineIdx >= lines.length
+  const visibleIndex = reducedMotion ? lines.length : lineIdx
 
   useEffect(() => {
     if (!playing || done) return
@@ -70,8 +71,8 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
   }, [playing, done, lineIdx, chars, lines, speed, fast])
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
-  }, [lineIdx, chars])
+    if (!reducedMotion) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
+  }, [lineIdx, reducedMotion])
 
   if (!replay) return null
 
@@ -87,7 +88,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
   }
 
   return (
-    <div className={`w-full overflow-hidden rounded-2xl border shadow-xl ${className}`} style={{ borderColor: C.wine, background: '#140910' }}>
+    <div className={`w-full overflow-hidden rounded-2xl border shadow-xl ${className}`} style={{ borderColor: C.wine, background: C.wine }}>
       {/* title bar */}
       <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold" style={{ background: C.wine, color: C.blush }}>
         <span className="h-3 w-3 rounded-full" style={{ background: C.terra }} />
@@ -100,33 +101,33 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
       </div>
 
       {/* phase stepper */}
-      <div className="flex gap-1 overflow-x-auto px-3 py-2" style={{ background: '#1e0e17' }}>
+      <div className="flex gap-1 overflow-x-auto px-3 py-2" style={{ background: C.wine }}>
         {PHASES.map((p) => {
           const reached = PHASES.indexOf(p) <= PHASES.indexOf(activePhase?.phase ?? 'clone') || done
           const hits = phaseHits(p)
           return (
             <div
               key={p}
-              className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold transition-all"
+              className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold"
               style={{
                 background: reached ? (hits ? C.terra : C.powder) : 'transparent',
-                color: reached ? '#140910' : '#71717a',
-                border: `1px solid ${reached ? 'transparent' : '#3f3f46'}`,
+                color: reached ? C.wine : C.blush,
+                border: `1px solid ${reached ? 'transparent' : C.powder}`,
               }}
             >
               {PHASE_LABEL[p]}
-              {reached && hits > 0 && <span className="rounded-full bg-black/20 px-1.5">{hits}</span>}
+              {reached && hits > 0 && <span className="rounded-full px-1.5">{hits}</span>}
             </div>
           )
         })}
       </div>
 
       {/* terminal */}
-      <div ref={scrollRef} className="h-80 overflow-y-auto px-4 py-3 font-mono text-[13px] leading-relaxed sm:h-96" role="region" aria-label="Simulated commands, never executed" tabIndex={0}>
-        {lines.slice(0, lineIdx + 1).map((l, i) => {
+      <p className="sr-only" role="status">{done ? lines.map(lineText).join('\n') || 'No replay lines.' : 'Replay in progress. Pause or skip to end to read the full text.'}</p>
+      <div ref={scrollRef} role="region" tabIndex={0} aria-label="Simulated commands, never executed" className="h-80 overflow-y-auto px-4 py-3 font-mono text-[13px] leading-relaxed sm:h-96">
+        {lines.slice(0, visibleIndex + 1).map((l, i) => {
           const full = lineText(l)
           const text = i === lineIdx && !done && l.kind === 'cmd' ? full.slice(0, chars) : full
-          if (i === lineIdx && done) return null
           if (l.kind === 'phase')
             return (
               <div key={i} className="mt-3 text-xs font-bold uppercase tracking-widest first:mt-0" style={{ color: C.blush }}>
@@ -135,16 +136,13 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
             )
           if (l.kind === 'cmd')
             return (
-              <div key={i} className="break-all" style={{ color: l.severity === 'info' ? '#e4e4e7' : sevColor(l.severity) }}>
-                {text}
-                {i === lineIdx && !done && <span className="ml-0.5 inline-block w-2 animate-pulse" style={{ background: C.blush }}>&nbsp;</span>}
-                {l.evidence && (i < lineIdx || done || chars >= full.length) && (
-                  <span className="ml-2 text-[11px] text-zinc-500">← {l.evidence}</span>
-                )}
+              <div key={i} className="break-all" style={{ color: sevColor(l.severity) }}>
+                <span className="replay-command"><span className="replay-reserved" aria-hidden="true">{full}</span><span className="replay-typed" aria-hidden="true">{text}</span><span className="sr-only">{full}</span></span>
+                {l.evidence && <span className="ml-2 text-[11px]" style={{ color: C.powder }}>← {l.evidence}</span>}
               </div>
             )
           return (
-            <div key={i} className="pl-4 text-[12px]" style={{ color: l.severity === 'info' ? '#a1a1aa' : sevColor(l.severity) }}>
+            <div key={i} className="pl-4 text-[12px]" style={{ color: sevColor(l.severity) }}>
               {text}
             </div>
           )
@@ -160,15 +158,15 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
       </div>
 
       {/* controls */}
-      <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2 text-xs" style={{ borderColor: '#3f3f46', background: '#1e0e17' }}>
-        <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.terra, color: '#140910' }} onClick={done ? restart : () => setPlaying((p) => !p)}>
+      <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2 text-xs" style={{ borderColor: C.powder, background: C.wine }}>
+        <button disabled={reducedMotion} className="rounded-full px-3 py-1 font-semibold" style={{ background: C.terra, color: C.wine }} onClick={done ? restart : () => setPlaying((p) => !p)}>
           {done ? 'Replay' : playing ? 'Pause' : 'Play'}
         </button>
-        <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.powder, color: '#140910' }} onClick={() => setFast((f) => !f)}>
+        <button disabled={reducedMotion} className="rounded-full px-3 py-1 font-semibold" style={{ background: C.powder, color: C.wine }} onClick={() => setFast((f) => !f)}>
           {fast ? '1x' : 'Fast'}
         </button>
         <button
-          className="rounded-full px-3 py-1 font-semibold text-zinc-300 ring-1 ring-zinc-600"
+          className="rounded-full px-3 py-1 font-semibold text-[#FFF8D5] ring-1 ring-[#A6C9DD]"
           onClick={() => {
             setLineIdx(lines.length)
             setPlaying(false)
@@ -176,7 +174,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
         >
           Skip to end
         </button>
-        <span className="ml-auto text-zinc-500">Commands are shown as text. Nothing from the repo is executed.</span>
+        <span className="ml-auto text-[#FFF8D5]">Commands are shown as text. Nothing from the repo is executed.</span>
       </div>
     </div>
   )

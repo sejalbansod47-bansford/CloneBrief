@@ -49,7 +49,7 @@ export default function App() {
     event.preventDefault()
     setCheck(null); setPackageError(''); setPackageBusy(true)
     try {
-      const response = await fetch('/api/check-packages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ manifest, ecosystem }) })
+      const response = await fetch('/api/check-packages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ manifest, ecosystem }), signal: AbortSignal.timeout(20000) })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Lookup failed. Try again.')
       setCheck(data)
