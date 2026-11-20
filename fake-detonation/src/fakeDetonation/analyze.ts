@@ -27,10 +27,35 @@ function judge(cmd: string, fallback: Severity, fallbackWhy: string): { severity
   return { severity: fallback, why: fallbackWhy }
 }
 
+/** Strips JSONC comments and trailing commas outside string literals. */
+export function stripJsonc(text: string): string {
+  let out = ''
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (ch === '"') {
+      let j = i + 1
+      while (j < text.length && text[j] !== '"') j += text[j] === '\\' ? 2 : 1
+      out += text.slice(i, j + 1)
+      i = j
+    } else if (ch === '/' && text[i + 1] === '/') {
+      while (i < text.length && text[i] !== '\n') i++
+      out += '\n'
+    } else if (ch === '/' && text[i + 1] === '*') {
+      const end = text.indexOf('*/', i + 2)
+      i = end === -1 ? text.length : end + 1
+    } else if (ch === ',') {
+      let j = i + 1
+      while (j < text.length && /\s/.test(text[j])) j++
+      if (text[j] !== '}' && text[j] !== ']') out += ch
+    } else out += ch
+  }
+  return out
+}
+
 function safeJson(text: string | undefined): any {
   if (!text) return undefined
   try {
-    return JSON.parse(text.replace(/^\s*\/\/.*$/gm, '').replace(/,\s*([}\]])/g, '$1'))
+    return JSON.parse(stripJsonc(text))
   } catch {
     return undefined
   }
@@ -86,7 +111,11 @@ export function interestingPaths(paths: string[]): string[] {
 
 export function analyze(snap: RepoSnapshot): Finding[] {
   const f: Finding[] = []
+  const seen = new Set<string>()
   const add = (phase: Phase, command: string, evidence: string, fallback: Severity, why: string) => {
+    const key = phase + '|' + command.replace(/\s+/g, ' ').trim()
+    if (seen.has(key)) return
+    seen.add(key)
     const j = judge(command, fallback, why)
     f.push({ phase, command: clip(command), evidence, severity: j.severity, why: j.why })
   }
@@ -104,7 +133,7 @@ export function analyze(snap: RepoSnapshot): Finding[] {
     for (const key of ['initializeCommand', 'onCreateCommand', 'postCreateCommand', 'postStartCommand', 'postAttachCommand']) {
       const v = dc?.[key]
       if (!v) continue
-      const cmd = typeof v === 'string' ? v : Array.isArray(v) ? v.join(' ') : Object.values(v).flat().join(' && ')
+      const cmd = typeof v === 'string' ? v : Array.isArray(v) ? v.join(' ') : Object.values(v).map((c) => (Array.isArray(c) ? c.join(' ') : String(c))).join(' && ')
       add('open', cmd, `${p} → ${key}`, 'pause', key === 'initializeCommand' ? 'Runs on your own machine (not the container) when you reopen in a dev container.' : 'Runs when the dev container starts.')
     }
   }
@@ -153,12 +182,7 @@ export function analyze(snap: RepoSnapshot): Finding[] {
     if (cmd) add('run', cmd, `package.json → scripts.${s}`, 'info', `"npm run ${s}" runs this.`)
   }
 
-  // de-dupe identical commands in the same phase
-  const seen = new Set<string>()
-  return f.filter((x) => {
-    const k = x.phase + '|' + x.command
-    return seen.has(k) ? false : (seen.add(k), true)
-  })
+  return f
 }
 
 const PHASES: { phase: Phase; title: string }[] = [
@@ -207,6 +231,9 @@ export function buildReplay(snap: RepoSnapshot, findings = analyze(snap)): Repla
     for (const p of prompts[phase]) if (!here.some((x) => x.command === p)) lines.push({ kind: 'cmd', text: p, severity: 'info' })
     if (phase === 'clone') {
       lines.push({ kind: 'say', text: `${snap.paths.length} files copied. Cloning alone runs nothing from the repo.`, severity: 'info' })
+      if (snap.unread?.length)
+        lines.push({ kind: 'say', text: `Could not read ${snap.unread.join(', ')}. Results below may be incomplete.`, severity: 'pause' })
+      if (snap.truncated) lines.push({ kind: 'say', text: 'Repo is too big to list fully. Results below may be incomplete.', severity: 'pause' })
       continue
     }
     if (!here.length) {
