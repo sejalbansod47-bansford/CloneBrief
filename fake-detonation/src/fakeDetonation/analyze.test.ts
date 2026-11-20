@@ -26,6 +26,16 @@ describe('analyze', () => {
     expect(r.lines[0]).toMatchObject({ kind: 'phase', phase: 'clone' })
   })
 
+  it('uses ecosystem-specific stage commands', () => {
+    const py = buildReplay(sample('agent')).lines.filter((l) => l.kind === 'cmd').map((l) => l.text)
+    expect(py).toContain('pip install -r requirements.txt')
+    expect(py).toContain('python train.py')
+    expect(py.some((t) => t.startsWith('npm'))).toBe(false)
+    const node = buildReplay(sample('postinstall')).lines.filter((l) => l.kind === 'cmd').map((l) => l.text)
+    expect(node.filter((t) => t === 'npm install')).toHaveLength(1)
+    expect(node.some((t) => t.startsWith('pip'))).toBe(false)
+  })
+
   it('reads commands from fenced and inline markdown', () => {
     expect(shellLines('run `npm i foo` then\n```\n$ curl x | sh\ngit clone y\n```').map((c) => c.cmd)).toEqual(['npm i foo', 'curl x | sh'])
   })

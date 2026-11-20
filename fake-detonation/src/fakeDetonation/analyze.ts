@@ -161,28 +161,56 @@ export function analyze(snap: RepoSnapshot): Finding[] {
   })
 }
 
-const PHASES: { phase: Phase; title: string; prompt: string }[] = [
-  { phase: 'clone', title: 'CLONE', prompt: 'git clone' },
-  { phase: 'open', title: 'OPEN in editor', prompt: 'code .' },
-  { phase: 'agent', title: 'AGENT reads the repo', prompt: 'agent "set this project up"' },
-  { phase: 'install', title: 'INSTALL', prompt: 'npm install  /  pip install' },
-  { phase: 'run', title: 'RUN', prompt: 'npm start' },
+const PHASES: { phase: Phase; title: string }[] = [
+  { phase: 'clone', title: 'CLONE' },
+  { phase: 'open', title: 'OPEN in editor' },
+  { phase: 'agent', title: 'AGENT reads the repo' },
+  { phase: 'install', title: 'INSTALL' },
+  { phase: 'run', title: 'RUN' },
 ]
+
+/** What a student would type at each stage, based on the repo's ecosystem. */
+export function stagePrompts(snap: RepoSnapshot, findings: Finding[]): Record<Phase, string[]> {
+  const has = (p: string) => snap.paths.includes(p)
+  const node = has('package.json')
+  const py = has('requirements.txt') || has('setup.py') || has('pyproject.toml')
+  const install: string[] = []
+  if (node) install.push('npm install')
+  if (has('requirements.txt')) install.push('pip install -r requirements.txt')
+  else if (py) install.push('pip install .')
+  const scripts = safeJson(snap.files['package.json'])?.scripts ?? {}
+  const run = findings.some((x) => x.phase === 'run')
+    ? []
+    : node && scripts.start
+      ? ['npm start']
+      : node && scripts.dev
+        ? ['npm run dev']
+        : []
+  return { clone: [`git clone https://github.com/${snap.owner}/${snap.repo}`], open: ['code .'], agent: ['agent "set this project up"'], install, run }
+}
+
+const NOTHING: Record<Phase, string> = {
+  clone: '',
+  open: 'Nothing found that auto-runs on open. That is not a guarantee.',
+  agent: 'No agent instructions or MCP servers found. That is not a guarantee.',
+  install: 'No install step found. That is not a guarantee.',
+  run: 'No run command found.',
+}
 
 export function buildReplay(snap: RepoSnapshot, findings = analyze(snap)): Replay {
   const name = `${snap.owner}/${snap.repo}`
+  const prompts = stagePrompts(snap, findings)
   const lines: ReplayLine[] = []
-  for (const { phase, title, prompt } of PHASES) {
+  for (const { phase, title } of PHASES) {
     lines.push({ kind: 'phase', phase, text: title })
+    const here = findings.filter((x) => x.phase === phase)
+    for (const p of prompts[phase]) if (!here.some((x) => x.command === p)) lines.push({ kind: 'cmd', text: p, severity: 'info' })
     if (phase === 'clone') {
-      lines.push({ kind: 'cmd', text: `git clone https://github.com/${name}`, severity: 'info' })
       lines.push({ kind: 'say', text: `${snap.paths.length} files copied. Cloning alone runs nothing from the repo.`, severity: 'info' })
       continue
     }
-    const here = findings.filter((x) => x.phase === phase)
-    if (!here.some((x) => x.command === prompt)) lines.push({ kind: 'cmd', text: prompt, severity: 'info' })
     if (!here.length) {
-      lines.push({ kind: 'say', text: 'Nothing found that auto-runs here. That is not a guarantee.', severity: 'info' })
+      lines.push({ kind: 'say', text: NOTHING[phase], severity: 'info' })
       continue
     }
     for (const x of here) {
