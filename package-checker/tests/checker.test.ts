@@ -2,6 +2,11 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {checkPackages,parseInput} from '../src/checker/index.ts';
 const old={time:{created:'2020-01-01'},'dist-tags':{latest:'1'},versions:{'1':{}}};
+test('package.json dependencies take priority over script commands',()=>{
+  const manifest=JSON.stringify({scripts:{check:'npx tsc --noEmit'},dependencies:{react:'*'},devDependencies:{typescript:'*'},optionalDependencies:{express:'*'},peerDependencies:{next:'*'}});
+  for (const ecosystem of ['npm','auto'] as const) assert.deepEqual(parseInput({ecosystem,manifest}).map(p=>p.name),['react','typescript','express','next']);
+  assert.deepEqual(parseInput({ecosystem:'npm',manifest:'{"dependencies":{},"scripts":{"check":"npx tsc --noEmit"}}'}),[]);
+});
 const mock=(registry:unknown=old, osv:unknown={},status=200)=> (async(url:any)=>new Response(JSON.stringify(String(url).includes('osv.dev')?osv:registry),{status:String(url).includes('osv.dev')?200:status})) as typeof fetch;
 test('clean exact name and empty input',async()=>{
   const r=await checkPackages({ecosystem:'npm',packages:['express']},{fetch:mock()});

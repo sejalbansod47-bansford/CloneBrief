@@ -15,8 +15,13 @@ export function parseInput(input: Input): Package[] {
   input.packages?.forEach(n => add(n, eco!));
   const raw = input.manifest?.trim();
   if (raw) {
+    let packageJson: Record<string, any> | undefined;
+    try {
+      const json = JSON.parse(raw);
+      if (json && typeof json === 'object' && ['dependencies','devDependencies','optionalDependencies','peerDependencies'].some(field => field in json)) packageJson = json;
+    } catch {}
     let commands = false;
-    for (const line of raw.split('\n')) {
+    for (const line of packageJson ? [] : raw.split('\n')) {
       const m = line.match(/\b(npm\s+(?:i|install|add)|yarn\s+add|pnpm\s+add|npx|pip3?\s+install|uv\s+add|poetry\s+add)\s+([^`\n]+)/);
       if (!m) continue;
       commands = true;
@@ -29,11 +34,11 @@ export function parseInput(input: Input): Package[] {
       }
     }
     if (!commands) {
-      if (!eco) throw new Error('Manifest requires ecosystem, or install commands for auto detection');
-      if (eco === 'npm') {
-        const json = JSON.parse(raw);
+      if (!eco && !packageJson) throw new Error('Manifest requires ecosystem, or install commands for auto detection');
+      if (packageJson || eco === 'npm') {
+        const json = packageJson ?? JSON.parse(raw);
         for (const field of ['dependencies','devDependencies','optionalDependencies','peerDependencies']) {
-          if (json[field]) Object.keys(json[field]).forEach(n => add(n, eco));
+          if (json[field]) Object.keys(json[field]).forEach(n => add(n, 'npm'));
         }
       } else if (/^\s*\[/m.test(raw)) {
         let section = '', collecting = false;
