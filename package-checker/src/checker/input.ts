@@ -26,13 +26,14 @@ const STOP_WORDS = new Set(['and','or','then','to','if']);
 const DIRECT_SOURCE = /@\s*(?:https?:|git\+|git:|github:|file:)/i;
 const npmTarget = (spec: string) => { const bare = spec.replace(/^['"`(]+/, ''); return (bare.match(/@npm:(.+)$/)?.[1] ?? bare).replace(/(.)@.*$/, '$1'); };
 const VERSION_SPEC = /^(?:npm:|[\^~<>=*]|\d|latest$|next$|workspace:|git|github:|https?:|file:)/;
+const NEXT_NAME = /\s*[@a-z0-9]/iy;
 function splitTopLevelCommas(line: string): string[] {
   const parts: string[] = [];
   let depth = 0, start = 0;
   for (let i = 0; i < line.length; i++) {
     if (line[i] === '[') depth++;
     else if (line[i] === ']') depth = Math.max(0, depth - 1);
-    else if (line[i] === ',' && !depth && /^\s*[@a-z0-9]/i.test(line.slice(i + 1, i + 3))) { parts.push(line.slice(start, i)); start = i + 1; }
+    else if (line[i] === ',' && !depth && (NEXT_NAME.lastIndex = i + 1, NEXT_NAME.test(line))) { parts.push(line.slice(start, i)); start = i + 1; }
   }
   return [...parts, line.slice(start)].map(part => part.trim()).filter(Boolean);
 }

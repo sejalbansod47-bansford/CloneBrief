@@ -92,7 +92,9 @@ test('student inputs: plain requirements, dependency fragments, chatbot prose an
   assert.deepEqual(names('npm install my-react@npm:react@18 left-pad@git+https://x/y','auto',direct),['npm:react']);
   assert.equal(direct.length,3);
   assert.deepEqual(names(`npm install "@types/node@20" '@scope/pkg'`),['npm:@types/node','npm:@scope/pkg']);
-  const t=Date.now(); assert.equal(parseInput({ecosystem:'npm',manifest:Array(30000).fill('a').join(',')}).length,1); assert.ok(Date.now()-t<500);
+  assert.deepEqual(names('react,   lodash','npm'),['npm:react','npm:lodash']);
+  assert.deepEqual(names('flask==3.0,  numpy','pypi'),['pypi:flask','pypi:numpy']);
+  const t=Date.now(); assert.equal(parseInput({ecosystem:'npm',manifest:Array(30000).fill('a').join(',   ')}).length,1); assert.ok(Date.now()-t<500);
   assert.throws(()=>parseInput({ecosystem:'auto',manifest:'react\nlodash'}),/Pick one in the dropdown/);
   assert.throws(()=>parseInput({ecosystem:'auto',manifest:'{"dependencies":{"react":"^18",}}'}),/isn't valid JSON/);
 });
