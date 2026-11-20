@@ -24,10 +24,11 @@ export interface FetchOptions {
 async function gh(path: string, o: FetchOptions) {
   const url = o.proxyUrl ? o.proxyUrl + encodeURIComponent(path) : `https://api.github.com${path}`
   const res = await fetch(url, {
+    signal: AbortSignal.timeout(15000),
     headers: { Accept: 'application/vnd.github+json', ...(o.token ? { Authorization: `Bearer ${o.token}` } : {}), ...o.headers },
   })
   if (res.status === 404) throw new Error('Repo not found or private. CloneBrief only reads public repos.')
-  if (res.status === 403 || res.status === 429) throw new Error('GitHub rate limit hit. Try a sample, or use the Supabase proxy with a token.')
+  if (res.status === 403 || res.status === 429) throw new Error('GitHub is limiting requests right now. Try a sample below, or retry this public repo later.')
   if (!res.ok) throw new Error(`GitHub API error ${res.status}`)
   return res.json()
 }
@@ -53,7 +54,7 @@ export async function fetchSnapshot(url: string, opts: FetchOptions = {}): Promi
   await Promise.all(
     interestingPaths(paths).map(async (p) => {
       if ((sizes.get(p) ?? 0) > MAX_FILE_BYTES) return void unread.push(p)
-      const res = await fetch(`https://raw.githubusercontent.com/${meta.owner.login}/${meta.name}/${encodeURIComponent(branch)}/${p.split('/').map(encodeURIComponent).join('/')}`).catch(() => undefined)
+      const res = await fetch(`https://raw.githubusercontent.com/${meta.owner.login}/${meta.name}/${encodeURIComponent(branch)}/${p.split('/').map(encodeURIComponent).join('/')}`, { signal: AbortSignal.timeout(15000) }).catch(() => undefined)
       if (res?.ok) files[p] = await res.text()
       else unread.push(p)
     }),

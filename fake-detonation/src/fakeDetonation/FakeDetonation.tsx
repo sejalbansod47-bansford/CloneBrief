@@ -33,13 +33,21 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
   const [chars, setChars] = useState(0)
   const [playing, setPlaying] = useState(autoPlay)
   const [fast, setFast] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setLineIdx(0)
+    const media = matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReducedMotion(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  useEffect(() => {
+    setLineIdx(reducedMotion ? replay?.lines.length ?? 0 : 0)
     setChars(0)
-    setPlaying(autoPlay)
-  }, [replay, autoPlay])
+    setPlaying(autoPlay && !reducedMotion)
+  }, [replay, autoPlay, reducedMotion])
 
   const lines = replay?.lines ?? []
   const done = lineIdx >= lines.length
@@ -114,7 +122,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
       </div>
 
       {/* terminal */}
-      <div ref={scrollRef} className="h-80 overflow-y-auto px-4 py-3 font-mono text-[13px] leading-relaxed sm:h-96" aria-live="polite">
+      <div ref={scrollRef} className="h-80 overflow-y-auto px-4 py-3 font-mono text-[13px] leading-relaxed sm:h-96" role="region" aria-label="Simulated commands, never executed" tabIndex={0}>
         {lines.slice(0, lineIdx + 1).map((l, i) => {
           const full = lineText(l)
           const text = i === lineIdx && !done && l.kind === 'cmd' ? full.slice(0, chars) : full
