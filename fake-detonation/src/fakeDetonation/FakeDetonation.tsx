@@ -171,7 +171,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
         <button className="rounded-full px-3 py-1 font-semibold text-zinc-300 ring-1 ring-zinc-600" disabled={done} onClick={() => {
           setPlaying(false)
           if (lines[lineIdx]?.kind === 'cmd' && chars < lineText(lines[lineIdx]).length) setChars(lineText(lines[lineIdx]).length)
-          else { setLineIdx((i) => Math.min(i + 1, lines.length)); setChars(0) }
+          else { const next = lineIdx + 1; setLineIdx(Math.min(next, lines.length)); setChars(lines[next] ? lineText(lines[next]).length : 0) }
         }}>Step</button>
         <button
           className="rounded-full px-3 py-1 font-semibold text-zinc-300 ring-1 ring-zinc-600"
