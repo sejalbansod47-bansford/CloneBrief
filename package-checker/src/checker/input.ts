@@ -47,13 +47,18 @@ export function parseInput(input: Input): Package[] {
           if (header) { section = header[1]; collecting = false; continue; }
           if (section === 'project' || section === 'project.optional-dependencies' || section === 'dependency-groups') {
             if (/^\s*(?:dependencies|[\w-]+)\s*=\s*\[/.test(line) && (section !== 'project' || /^\s*dependencies\s*=/.test(line))) collecting = true;
-            if (collecting) { for (const m of line.matchAll(/["']([^"']+)["']/g)) add(m[1], eco); if (line.includes(']')) collecting = false; }
+            if (collecting) {
+              for (const m of line.matchAll(/"(?:\\.|[^"\\])*"|'[^']*'|\]/g)) {
+                if (m[0] === ']') { collecting = false; break; }
+                add(m[0].slice(1,-1), 'pypi');
+              }
+            }
           } else if (/^tool\.poetry\.(?:dependencies|group\..+\.dependencies)$/.test(section)) {
-            const m = line.match(/^\s*([\w.-]+)\s*=/); if (m && m[1] !== 'python') add(m[1], eco);
+            const m = line.match(/^\s*([\w.-]+)\s*=/); if (m && m[1] !== 'python') add(m[1], 'pypi');
           }
         }
       } else {
-        for (const line of raw.split('\n')) { const s = line.trim(); if (s && !s.startsWith('#')) { if (s.startsWith('-')) throw new Error('Requirements options/includes are not supported'); add(s, eco); } }
+        for (const line of raw.split('\n')) { const s = line.trim(); if (s && !s.startsWith('#')) { if (s.startsWith('-')) throw new Error('Requirements options/includes are not supported'); add(s, 'pypi'); } }
       }
     }
   }

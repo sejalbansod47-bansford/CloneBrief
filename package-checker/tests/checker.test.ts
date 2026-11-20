@@ -2,6 +2,18 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {checkPackages,parseInput} from '../src/checker/index.ts';
 const old={time:{created:'2020-01-01'},'dist-tags':{latest:'1'},versions:{'1':{}}};
+test('TOML extras do not close multiline dependency arrays',()=>{
+  const manifest=`[project]
+dependencies = [
+  "requests[socks]>=2",
+  'numpy[extra]==1',
+  "pandas>=2"
+]
+description = "not-a-dependency"
+[project.optional-dependencies]
+web = ["flask[async]", "django>=4"]`;
+  assert.deepEqual(parseInput({ecosystem:'pypi',manifest}).map(p=>p.name),['requests','numpy','pandas','flask','django']);
+});
 test('package.json dependencies take priority over script commands',()=>{
   const manifest=JSON.stringify({scripts:{check:'npx tsc --noEmit'},dependencies:{react:'*'},devDependencies:{typescript:'*'},optionalDependencies:{express:'*'},peerDependencies:{next:'*'}});
   for (const ecosystem of ['npm','auto'] as const) assert.deepEqual(parseInput({ecosystem,manifest}).map(p=>p.name),['react','typescript','express','next']);
