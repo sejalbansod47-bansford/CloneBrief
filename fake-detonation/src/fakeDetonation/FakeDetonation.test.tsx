@@ -29,4 +29,10 @@ describe('replay accessibility', () => {
   it('announces an empty replay', () => {
     expect(render(true, true)).toContain('No replay lines.')
   })
+  it('hides and overlays reserved command space without host styles', () => {
+    const html = render(true)
+    expect(html).toContain('display:inline-grid')
+    expect(html).toContain('grid-area:1 / 1;visibility:hidden')
+    expect(html).toContain('class="replay-typed" aria-hidden="true" style="grid-area:1 / 1;')
+  })
 })

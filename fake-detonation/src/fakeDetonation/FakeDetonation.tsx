@@ -137,7 +137,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
           if (l.kind === 'cmd')
             return (
               <div key={i} className="break-all" style={{ color: sevColor(l.severity) }}>
-                <span className="replay-command"><span className="replay-reserved" aria-hidden="true">{full}</span><span className="replay-typed" aria-hidden="true">{text}</span><span className="sr-only">{full}</span></span>
+                <span className="replay-command" style={{ display: 'inline-grid', maxWidth: '100%', verticalAlign: 'top' }}><span className="replay-reserved" aria-hidden="true" style={{ gridArea: '1 / 1', visibility: 'hidden', overflowWrap: 'anywhere', minWidth: 0 }}>{full}</span><span className="replay-typed" aria-hidden="true" style={{ gridArea: '1 / 1', overflowWrap: 'anywhere', minWidth: 0 }}>{text}</span><span className="sr-only">{full}</span></span>
                 {l.evidence && <span className="ml-2 text-[11px]" style={{ color: C.powder }}>← {l.evidence}</span>}
               </div>
             )
