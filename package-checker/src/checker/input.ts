@@ -1,6 +1,17 @@
 export type Ecosystem = 'npm' | 'pypi';
 export type Input = { ecosystem?: Ecosystem | 'auto'; packages?: string[]; manifest?: string };
 export type Package = { name: string; ecosystem: Ecosystem };
+function stripComment(line: string): string {
+  let quote = '';
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (quote === '"' && char === '\\') { i++; continue; }
+    if (quote) { if (char === quote) quote = ''; }
+    else if (char === '"' || char === "'") quote = char;
+    else if (char === '#') return line.slice(0,i);
+  }
+  return line;
+}
 export function cleanName(value: string, ecosystem: Ecosystem): string {
   const name = value.trim().replace(/^['"]|['",;]$/g, '');
   const match = ecosystem === 'npm' ? name.match(/^(@[a-z0-9._-]+\/[a-z0-9._-]+|[a-z0-9._-]+)/i) : name.match(/^[a-z0-9][a-z0-9._-]*/i);
@@ -21,7 +32,7 @@ export function parseInput(input: Input): Package[] {
       if (json && typeof json === 'object' && ['dependencies','devDependencies','optionalDependencies','peerDependencies'].some(field => field in json)) packageJson = json;
     } catch {}
     let commands = false;
-    for (const line of packageJson ? [] : raw.split('\n')) {
+    for (const line of packageJson ? [] : raw.split('\n').map(stripComment)) {
       const m = line.match(/\b(npm\s+(?:i|install|add)|yarn\s+add|pnpm\s+add|npx|pip3?\s+install|uv\s+add|poetry\s+add)\s+([^`\n]+)/);
       if (!m) continue;
       commands = true;
@@ -44,7 +55,7 @@ export function parseInput(input: Input): Package[] {
         }
       } else if (/^\s*\[/m.test(raw)) {
         let section = '', collecting = false;
-        for (const line of raw.split('\n')) {
+        for (const line of raw.split('\n').map(stripComment)) {
           const header = line.match(/^\s*\[([^\]]+)\]/);
           if (header) { section = header[1]; collecting = false; continue; }
           if (section === 'project' || section === 'project.optional-dependencies' || section === 'dependency-groups') {
@@ -60,7 +71,7 @@ export function parseInput(input: Input): Package[] {
           }
         }
       } else {
-        for (const line of raw.split('\n')) { const s = line.trim(); if (s && !s.startsWith('#')) { if (s.startsWith('-')) throw new Error('Requirements options/includes are not supported'); add(s, 'pypi'); } }
+        for (const line of raw.split('\n')) { const s = stripComment(line).trim(); if (s) { if (s.startsWith('-')) throw new Error('Requirements options/includes are not supported'); add(s, 'pypi'); } }
       }
     }
   }
