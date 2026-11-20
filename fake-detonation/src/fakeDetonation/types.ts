@@ -15,6 +15,8 @@ export interface RepoSnapshot {
   ownerCreatedAt?: string
   stars?: number
   truncated?: boolean
+  /** Files we wanted to read but could not (too big, or the download failed). */
+  unread?: string[]
 }
 
 export interface Finding {

@@ -49,13 +49,14 @@ export async function fetchSnapshot(url: string, opts: FetchOptions = {}): Promi
   const paths: string[] = tree.tree.filter((t: any) => t.type === 'blob').map((t: any) => t.path)
   const sizes = new Map<string, number>(tree.tree.map((t: any) => [t.path, t.size ?? 0]))
   const files: Record<string, string> = {}
+  const unread: string[] = []
   await Promise.all(
-    interestingPaths(paths)
-      .filter((p) => (sizes.get(p) ?? 0) <= MAX_FILE_BYTES)
-      .map(async (p) => {
-        const res = await fetch(`https://raw.githubusercontent.com/${meta.owner.login}/${meta.name}/${encodeURIComponent(branch)}/${p.split('/').map(encodeURIComponent).join('/')}`)
-        if (res.ok) files[p] = await res.text()
-      }),
+    interestingPaths(paths).map(async (p) => {
+      if ((sizes.get(p) ?? 0) > MAX_FILE_BYTES) return void unread.push(p)
+      const res = await fetch(`https://raw.githubusercontent.com/${meta.owner.login}/${meta.name}/${encodeURIComponent(branch)}/${p.split('/').map(encodeURIComponent).join('/')}`).catch(() => undefined)
+      if (res?.ok) files[p] = await res.text()
+      else unread.push(p)
+    }),
   )
   return {
     owner: meta.owner.login,
@@ -67,5 +68,6 @@ export async function fetchSnapshot(url: string, opts: FetchOptions = {}): Promi
     ownerCreatedAt: owner?.created_at,
     stars: meta.stargazers_count,
     truncated: !!tree.truncated,
+    unread: unread.sort(),
   }
 }
