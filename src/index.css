@@ -339,6 +339,7 @@ footer>a:last-child { text-decoration: underline; text-underline-offset: 4px; }
   .repo-form input,textarea{font-size:16px}
   .samples button{font-size:10px}
   .package-actions .text-button{font-size:10px}
+  .package-actions .primary{min-height:44px}
   .replay-terminal button{min-height:44px}
   .package-copy h2{max-width:none;font-size:36px}
   .slot-machine{position:static;width:113px;margin-top:14px}
