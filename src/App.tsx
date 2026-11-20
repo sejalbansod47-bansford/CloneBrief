@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { FakeDetonation, fetchSnapshot, SAMPLES } from '../fake-detonation/src/fakeDetonation'
 import { createRepoCheck } from './repo'
+import { packageHeadline } from './results'
 import type { checkPackages } from '../package-checker/src/checker/index'
 
 type Check = Awaited<ReturnType<typeof checkPackages>>
 const labels: Record<string, string> = { real: 'registry match', one_typo_from_famous: 'one typo away', brand_new: 'born yesterday', does_not_exist: "doesn't exist", lookup_failed: 'lookup incomplete' }
+const sampleNames = ['install-script trap', 'agent bait', 'no-flags demo']
 const moments = [
   { title: 'clone', command: 'git clone', copy: 'just copying files. the next step matters.', tip: 'Copying is not the same as trusting. Keep the folder closed until you’ve had a look.', face: 'calm' },
   { title: 'open', command: 'code .', copy: 'your editor or AI agent can trigger hidden setup.', tip: 'Check editor tasks, devcontainers and agent instructions before trusting the workspace.', face: 'hmm' },
@@ -38,7 +40,7 @@ function Laptop({ mood = 0, small = false }: { mood?: number; small?: boolean })
 export default function App() {
   const [tab, setTab] = useState<'repo' | 'package'>('repo')
   const [url, setUrl] = useState('')
-  const [{ snapshot, replay, source }, setScan] = useState(() => createRepoCheck(SAMPLES[0].snapshot, 'sample · install-script trap'))
+  const [{ snapshot, replay, source }, setScan] = useState(() => createRepoCheck(SAMPLES[0].snapshot, `sample · ${sampleNames[0]}`))
   const [repoBusy, setRepoBusy] = useState(false)
   const [repoError, setRepoError] = useState('')
   const [manifest, setManifest] = useState('')
@@ -53,7 +55,7 @@ export default function App() {
   const alternative = check?.results.find(result => result.alternative)?.alternative
   const scrollTo = (element: HTMLElement | null) => element?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })
   function chooseSample(index: number) {
-    setScan(createRepoCheck(SAMPLES[index].snapshot, `sample · ${SAMPLES[index].label.toLowerCase()}`))
+    setScan(createRepoCheck(SAMPLES[index].snapshot, `sample · ${sampleNames[index]}`))
     setRepoError('')
     scrollTo(terminal.current)
   }
@@ -76,6 +78,13 @@ export default function App() {
     finally { setPackageBusy(false) }
   }
   function openPackages() { setTab('package'); scrollTo(packageSection.current) }
+  function navigateTabs(event: KeyboardEvent<HTMLDivElement>) {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const next = event.key === 'Home' ? 'repo' : event.key === 'End' ? 'package' : tab === 'repo' ? 'package' : 'repo'
+    setTab(next)
+    document.getElementById(`${next}-tab`)?.focus()
+  }
 
   return <>
     <header className="site-header wrap">
@@ -91,8 +100,8 @@ export default function App() {
         </div>
         <div className="hero-art" aria-hidden="true"><span className="art-spark spark-one">✦</span><span className="art-spark spark-two">✳</span><div className="art-circle"/><div className="speech">it’s just a quick<br/>npm install… right?</div><Laptop mood={2}/><span className="sticker">trust issues?<br/><b>valid.</b></span><span className="art-caption">your laptop, probably.</span></div>
         <div className="scan-card">
-          <div className="tabs" role="tablist" aria-label="Choose a check"><button role="tab" id="repo-tab" aria-controls="repo-panel" aria-selected={tab === 'repo'} onClick={() => setTab('repo')}>↗ repo check</button><button role="tab" id="package-tab" aria-controls="package-panel" aria-selected={tab === 'package'} onClick={openPackages}>{'{ }'} package check</button><span>curious is a good look.</span></div>
-          {tab === 'repo' ? <div id="repo-panel" role="tabpanel" aria-labelledby="repo-tab"><form onSubmit={scanRepo} className="repo-form"><label className="sr-only" htmlFor="repo-url">Public GitHub repository link</label><span className="input-icon" aria-hidden="true">↗</span><input id="repo-url" value={url} onChange={e => setUrl(e.target.value)} placeholder="paste a public github repo link" required disabled={repoBusy}/><button className="primary" disabled={repoBusy}>{repoBusy ? 'reading the repo…' : 'preview the repo'} <Arrow/></button></form><div className="samples"><span>or try a sample:</span>{['install-script trap', 'agent bait', 'no-flags demo'].map((name, i) => <button key={name} onClick={() => chooseSample(i)} disabled={repoBusy}>{name} <Arrow diagonal/></button>)}</div>{repoError && <p className="error" role="alert">{repoError}</p>}<p className="form-note">public repos only · selected files, not a full audit · samples are fictional demos</p></div> : <div id="package-panel" role="tabpanel" aria-labelledby="package-tab" className="package-intro"><p>AI told you to install something? let’s check it exists.</p><button className="primary" onClick={() => scrollTo(packageSection.current)}>to the package checker <Arrow/></button></div>}
+          <div className="tabs" role="tablist" aria-label="Choose a check" onKeyDown={navigateTabs}><button role="tab" id="repo-tab" aria-controls="repo-panel" aria-selected={tab === 'repo'} tabIndex={tab === 'repo' ? 0 : -1} onClick={() => setTab('repo')}>↗ repo check</button><button role="tab" id="package-tab" aria-controls="package-panel" aria-selected={tab === 'package'} tabIndex={tab === 'package' ? 0 : -1} onClick={openPackages}>{'{ }'} package check</button><span>curious is a good look.</span></div>
+          {tab === 'repo' ? <div id="repo-panel" role="tabpanel" aria-labelledby="repo-tab"><form onSubmit={scanRepo} className="repo-form"><label className="sr-only" htmlFor="repo-url">Public GitHub repository link</label><span className="input-icon" aria-hidden="true">↗</span><input id="repo-url" value={url} onChange={e => setUrl(e.target.value)} placeholder="paste a public github repo link" required disabled={repoBusy}/><button className="primary" disabled={repoBusy}>{repoBusy ? 'reading the repo…' : 'preview the repo'} <Arrow/></button></form><div className="samples"><span>or try a sample:</span>{sampleNames.map((name, i) => <button key={name} onClick={() => chooseSample(i)} disabled={repoBusy}>{name} <Arrow diagonal/></button>)}</div>{repoError && <p className="error" role="alert">{repoError}</p>}<p className="form-note">public repos only · selected files, not a full audit · samples are fictional demos</p></div> : <div id="package-panel" role="tabpanel" aria-labelledby="package-tab" className="package-intro"><p>AI told you to install something? let’s check it exists.</p><button className="primary" onClick={() => scrollTo(packageSection.current)}>to the package checker <Arrow/></button></div>}
         </div>
       </section>
 
@@ -106,7 +115,7 @@ export default function App() {
       <section className="package-section" id="packages" ref={packageSection} aria-labelledby="packages-title"><div className="wrap package-layout"><div className="package-copy"><span className="eyebrow">03 / fact-check your chatbot</span><h2 id="packages-title">did your AI<br/><span>make this up?</span></h2><p>paste dependencies to check registry names<br/>and known vulnerability reports.</p><div className={`slot-machine ${packageBusy ? 'spinning' : ''}`} aria-hidden="true"><span>real</span><span>typo?</span><span>new?</span></div><p className="small-print">registry presence ≠ a trust stamp.<br/>we check npm, PyPI and OSV advisories.</p></div>
         <div className="package-box"><form onSubmit={spin}><div className="field-heading"><label htmlFor="package-input">paste dependencies or an install command</label><select aria-label="Package ecosystem" value={ecosystem} onChange={e => setEcosystem(e.target.value)} disabled={packageBusy}><option value="auto">auto detect</option><option value="npm">npm / package.json</option><option value="pypi">PyPI / requirements.txt</option></select></div><textarea id="package-input" rows={5} value={manifest} onChange={e => setManifest(e.target.value)} maxLength={95000} placeholder={'paste a requirements.txt, package.json,\nor what your chatbot told you to install…\n\nnpm install react'} required disabled={packageBusy}/><div className="package-actions"><button type="button" className="text-button" disabled={packageBusy} onClick={() => { setManifest('pip install reqeusts'); setEcosystem('auto'); setCheck(null); setPackageError('') }}>try a typo example ↗</button><button className="primary" disabled={packageBusy}>{packageBusy ? 'checking…' : 'check packages'} <span aria-hidden="true">✳</span></button></div></form>
           {packageBusy && <p className="checking" role="status">checking the registries + advisories. not installing anything.</p>}{packageError && <p className="error" role="alert">{packageError}</p>}
-          {check && <div className="package-results" aria-live="polite"><p className="result-note">limited checks, not a trust stamp · expand for sources</p>{check.results.map(result => <details key={`${result.ecosystem}:${result.name}`}><summary><span className="result-name">{result.name}<small>{result.ecosystem}</small></span><span className={`stamp stamp-${result.label}`}>{labels[result.label]}</span></summary><div className="result-detail"><b>{result.verdict === 'do_not_install' ? 'do not install' : result.verdict === 'pause' ? 'pause + check' : 'no known issues found in the sources we checked'}</b>{!result.signals.length && <p>registry match only. this does not tell us what the code will do.</p>}{result.signals.map((signal, index) => <p key={index}><a href={signal.evidence.url} target="_blank" rel="noreferrer">{signal.title} ↗</a><br/>{signal.why}</p>)}</div></details>)}</div>}
+          {check && <div className="package-results" aria-live="polite"><p className="result-note">limited checks, not a trust stamp · expand for sources</p>{check.results.map(result => <details key={`${result.ecosystem}:${result.name}`}><summary><span className="result-name">{result.name}<small>{result.ecosystem}</small></span><span className={`stamp stamp-${result.label}`}>{labels[result.label]}</span></summary><div className="result-detail"><b>{packageHeadline(result)}</b>{!result.signals.length && <p>registry match only. this does not tell us what the code will do.</p>}{result.signals.map((signal, index) => <p key={index}><a href={signal.evidence.url} target="_blank" rel="noreferrer">{signal.title} ↗</a><br/>{signal.why}</p>)}</div></details>)}</div>}
         </div></div></section>
 
       <section className="wrap terminal-section" id="detonation" ref={terminal} aria-labelledby="terminal-title"><div className="section-heading"><div><span className="eyebrow">04 / a preview, not an execution</span><h2 id="terminal-title">what would have run.<br/><span>(we didn’t run it.)</span></h2></div><div className="replay-source"><span className="source-pill">{source}</span><p>commands are text. your laptop stays out of it.</p></div></div><FakeDetonation replay={replay} speed={170} className="replay-terminal"/>{snapshot.files['package.json'] && <button className="text-button repo-dependencies" onClick={() => { setManifest(snapshot.files['package.json']); setEcosystem('npm'); setCheck(null); setPackageError(''); openPackages() }}>check this {source.startsWith('sample') ? 'sample’s' : 'repo’s'} package.json too <Arrow/></button>}</section>

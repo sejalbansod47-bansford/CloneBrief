@@ -54,6 +54,14 @@ test('failures never clean',async()=>{
   const {results:[r]}=await checkPackages({ecosystem:'npm',packages:['react']},{fetch:(async()=>{throw Error('offline');}) as typeof fetch});
   assert.equal(r.label,'lookup_failed');assert.equal(r.verdict,'pause');assert.equal(r.signals.length,2);
 });
+test('ordinary advisories link to a browsable ecosystem-filtered evidence page',async()=>{
+  const {results:[r]}=await checkPackages({ecosystem:'npm',packages:['react']},{fetch:mock(old,{vulns:[{id:'GHSA-test'}]})});
+  assert.equal(r.verdict,'no_flags');
+  const url=new URL(r.signals.find(s=>s.type==='vulnerability_count')!.evidence.url);
+  assert.equal(url.origin+url.pathname,'https://osv.dev/list');
+  assert.equal(url.searchParams.get('q'),'react');
+  assert.equal(url.searchParams.get('ecosystem'),'npm');
+});
 test('PyPI earliest upload and normalized exact match',async()=>{
   const {results:[r]}=await checkPackages({ecosystem:'pypi',packages:['scikit_learn']},{fetch:mock({releases:{'1':[{upload_time:'2020-01-01T00:00:00'}],'2':[{upload_time:new Date().toISOString().slice(0,-1)}]}})});
   assert.equal(r.verdict,'no_flags');assert.equal(r.label,'real');
