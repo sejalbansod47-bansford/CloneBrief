@@ -38,7 +38,9 @@ export function parseInput(input: Input): Package[] {
       if (packageJson || eco === 'npm') {
         const json = packageJson ?? JSON.parse(raw);
         for (const field of ['dependencies','devDependencies','optionalDependencies','peerDependencies']) {
-          if (json[field]) Object.keys(json[field]).forEach(n => add(n, 'npm'));
+          if (json[field]) Object.entries(json[field]).forEach(([name, specifier]) => {
+            add(typeof specifier === 'string' && specifier.startsWith('npm:') ? specifier.slice(4) : name, 'npm');
+          });
         }
       } else if (/^\s*\[/m.test(raw)) {
         let section = '', collecting = false;

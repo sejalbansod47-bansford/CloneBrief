@@ -2,6 +2,10 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {checkPackages,parseInput} from '../src/checker/index.ts';
 const old={time:{created:'2020-01-01'},'dist-tags':{latest:'1'},versions:{'1':{}}};
+test('npm aliases resolve to their registry target including scopes',()=>{
+  const manifest=JSON.stringify({dependencies:{'react-v18':'npm:react@^18'},devDependencies:{'scoped-alias':'npm:@scope/pkg@^2'},optionalDependencies:{optional:'npm:express@4'},peerDependencies:{peer:'npm:next@14',react:'^18'}});
+  assert.deepEqual(parseInput({ecosystem:'npm',manifest}).map(p=>p.name),['react','@scope/pkg','express','next']);
+});
 test('TOML extras do not close multiline dependency arrays',()=>{
   const manifest=`[project]
 dependencies = [
