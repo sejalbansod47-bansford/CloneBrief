@@ -10,16 +10,23 @@ const cors = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 
-// fetch would normalise /repos/../user (or %2e%2e) to the authenticated /user endpoint.
-const hasDotSegment = (path: string) =>
-  path.split('?')[0].split('/').some((seg) => ['.', '..'].includes(seg.replace(/%2e/gi, '.')))
+// fetch normalises dot segments (.., %2e%2e, backslashes) and could reach the authenticated /user endpoint,
+// so the path must already be in normal form.
+const isNormalised = (path: string) => {
+  try {
+    const u = new URL(path, 'https://api.github.com')
+    return u.origin === 'https://api.github.com' && u.pathname + u.search === path
+  } catch {
+    return false
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: cors })
 
   const path = new URL(req.url).searchParams.get('path') ?? ''
-  if (hasDotSegment(path) || !ALLOWED.some((re) => re.test(path))) return new Response('Path not allowed', { status: 400, headers: cors })
+  if (!isNormalised(path) || !ALLOWED.some((re) => re.test(path))) return new Response('Path not allowed', { status: 400, headers: cors })
 
   const token = Deno.env.get('GITHUB_TOKEN')
   const res = await fetch(`https://api.github.com${path}`, {
