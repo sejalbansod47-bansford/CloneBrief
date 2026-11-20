@@ -2,8 +2,7 @@
 // Set the secret once: supabase secrets set GITHUB_TOKEN=<fine-grained PAT, public repos read-only>
 // Only GETs to /repos/{o}/{r}, /repos/{o}/{r}/git/trees/..., and /users/{u} are forwarded.
 
-// '..' and '%2e' are rejected separately: fetch would normalise /repos/../user to the authenticated /user endpoint.
-const ALLOWED = [/^\/repos\/[\w.-]+\/[\w.-]+$/, /^\/repos\/[\w.-]+\/[\w.-]+\/git\/trees\/[\w.%-]+\?recursive=1$/, /^\/users\/[\w.-]+$/]
+const ALLOWED = [/^\/repos\/[\w.-]+\/[\w.-]+$/, /^\/repos\/[\w.-]+\/[\w.-]+\/git\/trees\/[^/?#]+\?recursive=1$/, /^\/users\/[\w.-]+$/]
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -11,12 +10,16 @@ const cors = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 
+// fetch would normalise /repos/../user (or %2e%2e) to the authenticated /user endpoint.
+const hasDotSegment = (path: string) =>
+  path.split('?')[0].split('/').some((seg) => ['.', '..'].includes(seg.replace(/%2e/gi, '.')))
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: cors })
 
   const path = new URL(req.url).searchParams.get('path') ?? ''
-  if (path.includes('..') || /%2e/i.test(path) || !ALLOWED.some((re) => re.test(path))) return new Response('Path not allowed', { status: 400, headers: cors })
+  if (hasDotSegment(path) || !ALLOWED.some((re) => re.test(path))) return new Response('Path not allowed', { status: 400, headers: cors })
 
   const token = Deno.env.get('GITHUB_TOKEN')
   const res = await fetch(`https://api.github.com${path}`, {
