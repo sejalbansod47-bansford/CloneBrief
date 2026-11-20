@@ -15,6 +15,7 @@ describe('production UI and package API', () => {
   beforeAll(async () => {
     root = await mkdtemp(join(tmpdir(), 'clonebrief-'))
     await writeFile(join(root, 'index.html'), '<h1>CloneBrief</h1>')
+    await writeFile(join(root, 'illustration.webp'), 'image fixture')
     handler = createHandler(root, async (input) => {
       calls.push(input)
       return checkPackages(input, { now: Date.parse('2026-11-20'), fetch: async (url) => {
@@ -38,6 +39,11 @@ describe('production UI and package API', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.results[0]).toMatchObject({ name: 'expresss', label: 'one_typo_from_famous', alternative: { id: 'express', docs: 'https://expressjs.com' } })
+  })
+  it('serves WebP artwork with its image media type', async () => {
+    const res = await fetch(origin + '/illustration.webp')
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/webp')
   })
   it('rejects malformed inputs without running checks', async () => {
     const count = calls.length

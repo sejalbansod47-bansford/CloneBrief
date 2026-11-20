@@ -4,7 +4,7 @@ import { extname, resolve, sep } from 'node:path'
 import { checkPackages } from '../package-checker/src/checker/index.ts'
 import type { Input } from '../package-checker/src/checker/input.ts'
 
-const MIME: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' }
+const MIME: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.webmanifest': 'application/manifest+json' }
 export function createHandler(root: string, checker = checkPackages) {
   let active = 0, windowStart = Date.now(), requests = 0
   return async (req: IncomingMessage, res: ServerResponse) => {
@@ -16,7 +16,7 @@ export function createHandler(root: string, checker = checkPackages) {
       if (path === '/api/check-packages') {
         if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return json(405, { error: 'Use POST.' }) }
         if (Date.now() - windowStart > 60_000) { requests = 0; windowStart = Date.now() }
-        if (active >= 2 || ++requests > 30) { res.setHeader('Retry-After', '60'); return json(429, { error: 'A few too many spins. Try again in a minute.' }) }
+        if (active >= 2 || ++requests > 30) { res.setHeader('Retry-After', '60'); return json(429, { error: 'Too many requests. Try again in a minute.' }) }
         active++
         try {
           let size = 0
