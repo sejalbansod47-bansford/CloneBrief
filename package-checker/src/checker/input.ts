@@ -24,8 +24,18 @@ const NPM_LINE = /^(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+(?:@\S*)?$/i;
 const COMMAND = String.raw`npm\s+(?:i|install|add)|yarn\s+add|pnpm\s+(?:add|i|install)|bun\s+(?:add|i|install)|npx|pip3?\s+install|uv\s+(?:add|pip\s+install)|poetry\s+add`;
 const STOP_WORDS = new Set(['and','or','then','to','if']);
 const DIRECT_SOURCE = /@\s*(?:https?:|git\+|git:|github:|file:)/i;
-const npmTarget = (spec: string) => (spec.match(/@npm:(.+)$/)?.[1] ?? spec).replace(/(.)@.*$/, '$1');
+const npmTarget = (spec: string) => { const bare = spec.replace(/^['"`(]+/, ''); return (bare.match(/@npm:(.+)$/)?.[1] ?? bare).replace(/(.)@.*$/, '$1'); };
 const VERSION_SPEC = /^(?:npm:|[\^~<>=*]|\d|latest$|next$|workspace:|git|github:|https?:|file:)/;
+function splitTopLevelCommas(line: string): string[] {
+  const parts: string[] = [];
+  let depth = 0, start = 0;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '[') depth++;
+    else if (line[i] === ']') depth = Math.max(0, depth - 1);
+    else if (line[i] === ',' && !depth && /^\s*[@a-z0-9]/i.test(line.slice(i + 1, i + 3))) { parts.push(line.slice(start, i)); start = i + 1; }
+  }
+  return [...parts, line.slice(start)].map(part => part.trim()).filter(Boolean);
+}
 function readPackageJson(raw: string): Record<string, any> | undefined {
   const parse = (text: string) => { try { const json = JSON.parse(text); return json && typeof json === 'object' && !Array.isArray(json) ? json : undefined; } catch {} };
   const json = parse(raw);
@@ -86,7 +96,7 @@ export function parseInput(input: Input, skipped: string[] = []): Package[] {
           }
         }
       } else {
-        const lines = raw.split('\n').map(line => stripComment(line).trim()).filter(Boolean).flatMap(line => line.split(/,\s*(?![^[]*\])(?=[@a-z0-9])/i));
+        const lines = raw.split('\n').map(line => stripComment(line).trim()).filter(Boolean).flatMap(splitTopLevelCommas);
         const looksPypi = lines.some(line => /^-[rcei]\b|^--/.test(line) || /[<>=!~]=|\[[^\]]*\]|;/.test(line));
         const ecosystem = eco ?? (looksPypi ? 'pypi' : undefined);
         if (!ecosystem) throw new Error("Couldn't tell npm from PyPI. Pick one in the dropdown, or paste the install command your chatbot gave you.");
