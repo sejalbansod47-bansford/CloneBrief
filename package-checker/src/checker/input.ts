@@ -29,9 +29,11 @@ const VERSION_SPEC = /^(?:npm:|[\^~<>=*]|\d|latest$|next$|workspace:|git|github:
 const NEXT_NAME = /\s*[@a-z0-9]/iy;
 function splitTopLevelCommas(line: string): string[] {
   const parts: string[] = [];
-  let depth = 0, start = 0;
+  let depth = 0, start = 0, quote = '';
   for (let i = 0; i < line.length; i++) {
-    if (line[i] === '[') depth++;
+    if (quote) { if (line[i] === quote) quote = ''; }
+    else if (line[i] === '"' || line[i] === "'") quote = line[i];
+    else if (line[i] === '[') depth++;
     else if (line[i] === ']') depth = Math.max(0, depth - 1);
     else if (line[i] === ',' && !depth && (NEXT_NAME.lastIndex = i + 1, NEXT_NAME.test(line))) { parts.push(line.slice(start, i)); start = i + 1; }
   }
