@@ -23,6 +23,8 @@ const PYPI_LINE = /^[a-z0-9][\w.-]*\s*(\[[^\]]*\])?\s*(?:[<>=!~].*|;.*|@.*)?$/i;
 const NPM_LINE = /^(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+(?:@\S*)?$/i;
 const COMMAND = String.raw`npm\s+(?:i|install|add)|yarn\s+add|pnpm\s+(?:add|i|install)|bun\s+(?:add|i|install)|npx|pip3?\s+install|uv\s+(?:add|pip\s+install)|poetry\s+add`;
 const STOP_WORDS = new Set(['and','or','then','to','if']);
+const DIRECT_SOURCE = /@\s*(?:https?:|git\+|git:|github:|file:)/i;
+const npmTarget = (spec: string) => (spec.match(/@npm:(.+)$/)?.[1] ?? spec).replace(/(.)@.*$/, '$1');
 const VERSION_SPEC = /^(?:npm:|[\^~<>=*]|\d|latest$|next$|workspace:|git|github:|https?:|file:)/;
 function readPackageJson(raw: string): Record<string, any> | undefined {
   const parse = (text: string) => { try { const json = JSON.parse(text); return json && typeof json === 'object' && !Array.isArray(json) ? json : undefined; } catch {} };
@@ -51,7 +53,8 @@ export function parseInput(input: Input, skipped: string[] = []): Package[] {
         for (const token of m[2].split(/\s+/)) {
           if (/^(?:&&|\||;|#|>)/.test(token) || STOP_WORDS.has(token.toLowerCase())) break;
           if (!token || token.startsWith('-')) continue;
-          tryAdd(token, ecosystem);
+          if (DIRECT_SOURCE.test(token)) skipped.push(token);
+          else tryAdd(ecosystem === 'npm' ? npmTarget(token) : token, ecosystem);
           if (m[1] === 'npx' || /[.:!?)]$/.test(token)) break;
         }
       }
@@ -83,13 +86,13 @@ export function parseInput(input: Input, skipped: string[] = []): Package[] {
           }
         }
       } else {
-        const lines = raw.split('\n').map(line => stripComment(line).trim()).filter(Boolean).flatMap(line => line.split(/,\s*(?=[@a-z0-9])/i));
+        const lines = raw.split('\n').map(line => stripComment(line).trim()).filter(Boolean).flatMap(line => line.split(/,\s*(?![^[]*\])(?=[@a-z0-9])/i));
         const looksPypi = lines.some(line => /^-[rcei]\b|^--/.test(line) || /[<>=!~]=|\[[^\]]*\]|;/.test(line));
         const ecosystem = eco ?? (looksPypi ? 'pypi' : undefined);
         if (!ecosystem) throw new Error("Couldn't tell npm from PyPI. Pick one in the dropdown, or paste the install command your chatbot gave you.");
         for (const line of lines) {
           if (line.startsWith('-')) { skipped.push(line); continue; }
-          if ((ecosystem === 'pypi' ? PYPI_LINE : NPM_LINE).test(line)) tryAdd(ecosystem === 'npm' ? line.replace(/(.)@.*$/, '$1') : line, ecosystem);
+          if (!DIRECT_SOURCE.test(line) && (ecosystem === 'pypi' ? PYPI_LINE : NPM_LINE).test(line)) tryAdd(ecosystem === 'npm' ? npmTarget(line) : line, ecosystem);
           else skipped.push(line.length > 60 ? `${line.slice(0, 57)}…` : line);
         }
       }
