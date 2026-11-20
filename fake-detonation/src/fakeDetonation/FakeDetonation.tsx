@@ -170,6 +170,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
           onClick={() => {
             setLineIdx(lines.length)
             setPlaying(false)
+            if (done) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'instant' })
           }}
         >
           Skip to end
