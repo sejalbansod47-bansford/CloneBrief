@@ -26,7 +26,13 @@ There are no pre-commit hooks. CI runs the root test and build commands.
 
 - Repo input → `fetchSnapshot` → `buildReplay` → existing `FakeDetonation` component. Fictional samples work offline; real scans read selected public files through GitHub, never clone or execute them. GitHub’s anonymous rate limit applies per visitor’s IP; retry later or use a sample when limited. Unsupported malformed configs show an error without replacing the current replay.
 - Package input → `POST /api/check-packages` → existing `checkPackages`. Only registry metadata and OSV advisories are fetched. The server has a 100 KB body limit, two concurrent checks and a shared 30-check/minute limit. No submitted data is saved. Names are sent to their registry and OSV; repo URLs go to GitHub. Do not paste secrets.
-- “Try this instead” only uses `package-checker/allowlist.json`, with attribution and official docs. Registry presence and upstream identity are not security guarantees.
+- “Curated similar name” only uses `package-checker/allowlist.json`, with attribution and official docs. Registry presence and upstream identity are not security guarantees.
+
+## Supply-chain field guide
+
+The professional, pencil-illustrated interface separates the short feature list, Clone/Open/Install/Run checkpoints, potential consequences and read-only tools. Consequences and incident details expand on demand rather than presenting a dense threat table.
+
+`src/content.ts` keeps each incident’s entry point, observed outcome, scope, practical lesson and primary-source link together. Sources are CISA’s March 2025 `tj-actions/changed-files` alert, CISA’s September 2025 Shai-Hulud alert, and Nx’s May 2026 Nx Console postmortem. These are historical examples, **not** scan results or a claim that these detectors cover every attack described. The source links remain available in each expanded incident.
 
 ## Moving to Lovable
 

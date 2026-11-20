@@ -93,7 +93,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
         <span className="h-3 w-3 rounded-full" style={{ background: C.terra }} />
         <span className="h-3 w-3 rounded-full" style={{ background: C.blush }} />
         <span className="h-3 w-3 rounded-full" style={{ background: C.powder }} />
-        <span className="ml-2 truncate font-mono">fake-detonation · {replay.repo}</span>
+        <span className="ml-2 truncate font-mono">Execution preview · {replay.repo}</span>
         <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider" style={{ background: C.blush, color: C.wine }}>
           Simulation · nothing runs
         </span>
@@ -161,7 +161,7 @@ export function FakeDetonation({ snapshot, replay: given, speed = 90, autoPlay =
 
       {/* controls */}
       <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2 text-xs" style={{ borderColor: '#3f3f46', background: '#1e0e17' }}>
-        <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.terra, color: '#fff' }} onClick={done ? restart : () => setPlaying((p) => !p)}>
+        <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.terra, color: '#140910' }} onClick={done ? restart : () => setPlaying((p) => !p)}>
           {done ? 'Replay' : playing ? 'Pause' : 'Play'}
         </button>
         <button className="rounded-full px-3 py-1 font-semibold" style={{ background: C.powder, color: '#140910' }} onClick={() => setFast((f) => !f)}>
