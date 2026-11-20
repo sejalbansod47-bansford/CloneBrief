@@ -22,9 +22,11 @@ describe('repository package handoff', () => {
     const manifest = JSON.stringify({ dependencies: { react: '*', alias: 'npm:react@18' }, devDependencies: { typescript: '*' }, optionalDependencies: { express: '*' }, peerDependencies: { next: '*' } })
     expect(repoPackageCount(manifest)).toBe(4)
   })
-  it('leaves malformed or over-limit input for manual review', () => {
+  it('leaves malformed input for manual review', () => {
     expect(repoPackageCount('{')).toBeNull()
+  })
+  it('offers large manifests, which the checker checks 50 at a time', () => {
     const dependencies = Object.fromEntries(Array.from({ length: 51 }, (_, index) => [`pkg${index}`, '*']))
-    expect(repoPackageCount(JSON.stringify({ dependencies }))).toBeNull()
+    expect(repoPackageCount(JSON.stringify({ dependencies }))).toBe(51)
   })
 })

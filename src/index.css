@@ -180,6 +180,7 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 3px; paddi
 .package-actions .primary { gap: 20px; }
 .package-results { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; font-size: 12px; }
 .result-note { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.result-warn { color: var(--wine); background: #fff6d6; border-left: 3px solid #e098ac; padding: 6px 9px; overflow-wrap: anywhere; }
 .package-results details { border-bottom: 1px solid var(--line); }
 .package-results summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; list-style: none; }
 .result-name { font-size: 14px; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
@@ -187,6 +188,7 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 3px; paddi
 .stamp { font-size: 9px; border: 1px solid #cbdce3; background: var(--blue-light); padding: 4px 7px; border-radius: 2px; white-space: nowrap; }
 .stamp-does_not_exist { color: #7e1338; background: #f8e7ec; border-color: #eed3dc; }
 .stamp-one_typo_from_famous, .stamp-brand_new, .stamp-lookup_failed { color: #6b501c; background: #fff6d6; border-color: #e6dcae; }
+.stamp-known_malicious { color: #fffaf7; background: var(--wine); border-color: var(--wine); }
 .result-detail { padding: 0 0 17px; font-size: 12px; }
 .result-detail b { font-weight: 500; color: var(--wine); }
 .result-detail p { color: var(--muted); margin-top: 12px; }

@@ -31,7 +31,7 @@ export function createHandler(root: string, checker = checkPackages) {
           if (!body || typeof body !== 'object' || ![undefined, 'auto', 'npm', 'pypi'].includes(body.ecosystem) || (body.manifest !== undefined && typeof body.manifest !== 'string') || (body.packages !== undefined && (!Array.isArray(body.packages) || body.packages.length > 50 || body.packages.some(n => typeof n !== 'string' || n.length > 214)))) return json(400, { error: 'Use npm, PyPI or auto, with up to 50 packages.' })
           try {
             const result = await checker(body, { concurrency: 4 })
-            if (!result.results.length) return json(400, { error: 'No packages found. Paste dependencies or an install command.' })
+            if (!result.results.length) return json(400, { error: result.skipped.length ? `No package names to check. Skipped: ${result.skipped.slice(0, 5).join(', ')}.` : 'No packages found. Paste a package.json, a requirements.txt or an install command.' })
             return json(200, result)
           } catch (error) { return json(400, { error: error instanceof Error ? error.message : 'Could not read these packages.' }) }
         } finally { active-- }
