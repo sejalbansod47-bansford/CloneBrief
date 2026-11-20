@@ -30,9 +30,10 @@ const NEXT_NAME = /\s*[@a-z0-9]/iy;
 function splitTopLevelCommas(line: string): string[] {
   const parts: string[] = [];
   let depth = 0, start = 0, quote = '';
+  const lastQuote: Record<string, number> = { '"': line.lastIndexOf('"'), "'": line.lastIndexOf("'") };
   for (let i = 0; i < line.length; i++) {
     if (quote) { if (line[i] === quote) quote = ''; }
-    else if (line[i] === '"' || line[i] === "'") quote = line[i];
+    else if ((line[i] === '"' || line[i] === "'") && i < lastQuote[line[i]]) quote = line[i];
     else if (line[i] === '[') depth++;
     else if (line[i] === ']') depth = Math.max(0, depth - 1);
     else if (line[i] === ',' && !depth && (NEXT_NAME.lastIndex = i + 1, NEXT_NAME.test(line))) { parts.push(line.slice(start, i)); start = i + 1; }
