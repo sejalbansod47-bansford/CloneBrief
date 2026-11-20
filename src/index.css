@@ -331,3 +331,25 @@ footer>a:last-child { text-decoration: underline; text-underline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+@media(max-width:640px){
+  html{scroll-padding-bottom:90px}
+  button,a,select,input,summary{min-height:44px;min-width:44px}
+  a{display:inline-flex;align-items:center}
+  p a{display:inline;min-height:0;min-width:0}
+  .repo-form input,textarea{font-size:16px}
+  .samples button{font-size:10px}
+  .package-actions .text-button{font-size:10px}
+  .package-actions .primary{min-height:44px}
+  .replay-terminal button{min-height:44px}
+  .package-copy h2{max-width:none;font-size:36px}
+  .slot-machine{position:static;width:113px;margin-top:14px}
+  .package-copy .small-print{margin-top:12px}
+  .flag-card:hover{transform:none}
+  .flag-card.is-flipped{background:var(--terra)}
+  .replay-terminal>div:first-child>span:last-child{flex-shrink:0}
+  .replay-terminal>div:nth-child(3){overflow-wrap:anywhere}
+  .result-detail a{overflow-wrap:anywhere}
+  .bottom-banner{padding-bottom:calc(11px + env(safe-area-inset-bottom));pointer-events:none}
+  body:has(input:focus,textarea:focus,select:focus) .bottom-banner{visibility:hidden}
+  footer{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+}
